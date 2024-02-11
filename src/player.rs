@@ -6,7 +6,7 @@ use bevy::{
     window::{CursorGrabMode, PrimaryWindow}, // window::{CursorGrabMode, PrimaryWindow},
 };
 
-pub mod controls;
+use bevy_flycam::FlyCam;
 
 // For entities that are players, such as in multiplayer
 #[derive(Component)]
@@ -111,7 +111,7 @@ pub fn player_input_system(
 
             //Apply pitch rotation (around the x-axis)
             //Calculate the current pitch to constrain the camera from flipping over
-            let current_pitch = transform.rotation.to_euler(EulerRot::XYZ).1;
+            let current_pitch: f32 = transform.rotation.to_euler(EulerRot::XYZ).1;
             let new_pitch = (current_pitch + n_yaw.to_radians())
                 .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2);
             let pitch_delta = new_pitch - current_pitch;
@@ -129,14 +129,12 @@ pub fn setup(mut commands: Commands) {
                 uuid: Uuid::new_v4(),
                 username: "Player".to_owned(),
             },
-            Transform::from_xyz(10.0, 12.0, 16.0).looking_at(Vec3::ZERO, Vec3::Y),
+            Transform::from_xyz(10.0, 12.0, 16.0),
             GlobalTransform::default(),
         ))
         .insert(Name::new("Player"))
         // Add a camera to the player or as a separate entity as needed
         .with_children(|parent: &mut ChildBuilder<'_, '_, '_>| {
-            parent
-                .spawn(Camera3dBundle::default())
-                .insert(controls::FlyCamera::default());
+            parent.spawn((Camera3dBundle::default(), FlyCam));
         });
 }
