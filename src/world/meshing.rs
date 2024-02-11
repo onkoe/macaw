@@ -1,5 +1,5 @@
-use super::{Chunk, ChunkBlockCoordinate};
-use crate::block::BlockType;
+use super::Chunk;
+use crate::{block::BlockType, world::coordinates::ChunkBlockCoordinate};
 
 pub trait Meshing {
     /// Given a location, returns whether or not the thing at that location

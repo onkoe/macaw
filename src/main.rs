@@ -52,10 +52,10 @@ use bevy::{
     window::{CursorGrabMode, PrimaryWindow},
 };
 
+use crate::world::coordinates::ChunkBlockCoordinate;
 use bevy_flycam::NoCameraPlayerPlugin;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{util::SubscriberInitExt, EnvFilter};
-use world::ChunkBlockCoordinate;
 
 use world::meshing::Meshing;
 
