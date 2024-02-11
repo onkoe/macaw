@@ -136,24 +136,21 @@ fn setup(
                     if let Some(ref b) = block {
                         tracing::debug!("block is found! {:?}", &block);
 
-                        if let Some(b_coords) = chunk.global_block_coords(block_coords.clone()) {
-                            if chunk.is_visible(&block_coords) {
-                                tracing::debug!(
-                                    "placing block {0:?} at coords: `{1:?}`",
-                                    b,
-                                    b_coords
-                                );
+                        let block_coordinates = chunk.global_block_coord(block_coords.clone());
+                        if chunk.is_visible(&block_coords) {
+                            tracing::debug!(
+                                "placing block {b:?} at coords: `{block_coordinates:?}`",
+                            );
 
-                                commands.spawn(PbrBundle {
-                                    mesh: meshes.add(Mesh::from(shape::Cube { size: 1_f32 })),
-                                    transform: Transform {
-                                        translation: b_coords.to_vec3(),
-                                        ..Default::default()
-                                    },
-                                    material: green_material.clone(),
+                            commands.spawn(PbrBundle {
+                                mesh: meshes.add(Mesh::from(shape::Cube { size: 1_f32 })),
+                                transform: Transform {
+                                    translation: block_coordinates.to_vec3(),
                                     ..Default::default()
-                                });
-                            }
+                                },
+                                material: green_material.clone(),
+                                ..Default::default()
+                            });
                         }
                     }
                 }
