@@ -41,7 +41,7 @@ impl ChunkBlockCoordinate {
     /// Usage:
     ///
     /// ```
-    /// # use macaw::world::ChunkBlockCoordinate;
+    /// # use macaw::world::coordinates::ChunkBlockCoordinate;
     /// #
     /// let coord = ChunkBlockCoordinate::new(1, 2, 3);
     ///

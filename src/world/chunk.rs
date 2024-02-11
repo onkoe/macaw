@@ -36,7 +36,7 @@ impl Chunk {
     /// returns the block from the internal `blocks` vector.
     ///
     /// If the block doesn't exist, you'll get `None` back instead.
-    pub(crate) fn get_local_block(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
+    pub fn get_local_block(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
         // TODO: return a result instead of option lmao
         self.blocks
             .get(self.local_block_index(local_coord))

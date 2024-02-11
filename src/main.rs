@@ -52,19 +52,14 @@ use bevy::{
     window::{CursorGrabMode, PrimaryWindow},
 };
 
-use crate::world::coordinates::ChunkBlockCoordinate;
 use bevy_flycam::NoCameraPlayerPlugin;
+use macaw::world::coordinates::ChunkBlockCoordinate;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{util::SubscriberInitExt, EnvFilter};
 
-use world::meshing::Meshing;
+use macaw::world::meshing::Meshing;
 
-use crate::ui::fps_counter::{fps_counter_showhide, fps_text_update_system, setup_fps_counter};
-
-mod block;
-mod player;
-mod ui;
-mod world;
+use macaw::ui::fps_counter::{fps_counter_showhide, fps_text_update_system, setup_fps_counter};
 
 fn main() -> anyhow::Result<()> {
     let filter = EnvFilter::builder()
@@ -86,7 +81,12 @@ fn main() -> anyhow::Result<()> {
         .insert_resource(DirectionalLightShadowMap { size: 2048 })
         .add_systems(
             Startup,
-            (setup, player::setup, ui::setup, setup_fps_counter),
+            (
+                setup,
+                macaw::player::setup,
+                macaw::ui::setup,
+                setup_fps_counter,
+            ),
         )
         .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
         //.add_systems(Update, player::player_input_system)
@@ -122,7 +122,7 @@ fn setup(
         ..Default::default()
     });
 
-    let world = world::generate();
+    let world = macaw::world::generate();
 
     for (chunk_location, chunk) in world.chunks() {
         tracing::debug!("chunk: `{chunk_location:?}`");
