@@ -6,8 +6,6 @@ use bevy::{
     window::{CursorGrabMode, PrimaryWindow}, // window::{CursorGrabMode, PrimaryWindow},
 };
 
-use bevy_flycam::FlyCam;
-
 // For entities that are players, such as in multiplayer
 #[derive(Component)]
 #[allow(unused)] // TODO: make it used!

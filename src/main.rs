@@ -48,8 +48,7 @@
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, pbr::DirectionalLightShadowMap, prelude::*};
 
-use bevy_flycam::NoCameraPlayerPlugin;
-use macaw::{player::Player, renderer::MacawRendererPlugin, ui::MacawUiPlugin};
+use macaw::{renderer::MacawRendererPlugin, ui::MacawUiPlugin};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{util::SubscriberInitExt, EnvFilter};
 

@@ -29,9 +29,11 @@ fn setup(
 
     let stone_handle: Handle<Image> =
         assets.load("/home/barrett/Documents/mythic_mining/assets/stone.png");
+
     let stone_material = materials.add(StandardMaterial {
         base_color: Color::RED,
         base_color_texture: Some(stone_handle),
+
         ..Default::default()
     });
 
