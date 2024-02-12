@@ -17,7 +17,7 @@ pub struct Player {
 }
 
 // Systems will handle logic, such as responding to input
-// TODO: fix this shiii
+// TODO: fix this
 pub fn player_input_system(
     mut mouse_input: EventReader<MouseMotion>,
     keyboard_input: Res<Input<KeyCode>>,
@@ -122,7 +122,6 @@ pub fn player_input_system(
 }
 
 pub fn setup(mut commands: Commands) {
-    // Spawning a player entity with components
     commands
         .spawn((
             Player {
@@ -133,8 +132,7 @@ pub fn setup(mut commands: Commands) {
             GlobalTransform::default(),
         ))
         .insert(Name::new("Player"))
-        // Add a camera to the player or as a separate entity as needed
         .with_children(|parent: &mut ChildBuilder<'_, '_, '_>| {
-            parent.spawn((Camera3dBundle::default(), FlyCam));
+            parent.spawn(Camera3dBundle::default());
         });
 }

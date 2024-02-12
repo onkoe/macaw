@@ -1,8 +1,44 @@
 use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
+use bevy_editor_pls::EditorPlugin;
 
-pub mod fps_counter;
+mod fps_counter;
+mod player_position;
 
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+/// Information about Cargo.toml.
+pub mod built_info {
+    include!(concat!(env!("OUT_DIR"), "/built.rs"));
+}
+
+pub struct MacawUiPlugin;
+
+impl Plugin for MacawUiPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Startup,
+            (
+                setup,
+                player_position::setup,
+                fps_counter::setup_fps_counter,
+            ),
+        );
+
+        app.add_systems(
+            Update,
+            (
+                fps_counter::fps_text_update_system,
+                fps_counter::fps_counter_showhide,
+                player_position::position_update_system,
+            ),
+        );
+
+        if cfg!(debug_assertions) {
+            app.add_plugins(EditorPlugin::default());
+        }
+    }
+}
+
+/// Builds the major UI elements.
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle {
         camera_2d: Camera2d {
             clear_color: ClearColorConfig::None,
@@ -13,6 +49,41 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         ..Default::default()
     });
+
+    // version info (top left)
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .with_children(|p| {
+            p.spawn(NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    width: Val::Auto,
+                    left: Val::ZERO,
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .with_children(|p| {
+                p.spawn(TextBundle {
+                    text: Text::from_sections([TextSection {
+                        value: format!("{} Beta {}", built_info::PKG_NAME, built_info::PKG_VERSION),
+                        style: TextStyle {
+                            font_size: 16.0,
+                            color: Color::WHITE,
+                            font: asset_server.load("fonts/Monocraft.otf"),
+                        },
+                    }]),
+                    ..Default::default()
+                });
+            });
+        });
 
     commands
         .spawn(NodeBundle {

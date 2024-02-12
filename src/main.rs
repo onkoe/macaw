@@ -46,20 +46,12 @@
 //!    monitor's specs (2160p144).
 //! 1. with warranty.
 
-use bevy::{
-    pbr::DirectionalLightShadowMap,
-    prelude::*,
-    window::{CursorGrabMode, PrimaryWindow},
-};
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, pbr::DirectionalLightShadowMap, prelude::*};
 
 use bevy_flycam::NoCameraPlayerPlugin;
-use macaw::world::coordinates::ChunkBlockCoordinate;
+use macaw::{player::Player, renderer::MacawRendererPlugin, ui::MacawUiPlugin};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{util::SubscriberInitExt, EnvFilter};
-
-use macaw::world::meshing::Meshing;
-
-use macaw::ui::fps_counter::{fps_counter_showhide, fps_text_update_system, setup_fps_counter};
 
 fn main() -> anyhow::Result<()> {
     let filter = EnvFilter::builder()
@@ -72,91 +64,21 @@ fn main() -> anyhow::Result<()> {
         .finish()
         .init();
 
-    tracing::warn!("hello world!");
+    let mut app = App::new();
 
-    App::new()
-        //.add_plugins((DefaultPlugins, player::controls::ControlsPlugin))
-        .add_plugins(DefaultPlugins)
-        .add_plugins(NoCameraPlayerPlugin)
+    app.add_plugins(DefaultPlugins)
+        //.add_plugins(NoCameraPlayerPlugin)
+        .add_plugins(FrameTimeDiagnosticsPlugin)
+        .add_plugins(MacawUiPlugin)
+        .add_plugins(MacawRendererPlugin)
         .insert_resource(DirectionalLightShadowMap { size: 2048 })
         .add_systems(
             Startup,
-            (
-                setup,
-                macaw::player::setup,
-                macaw::ui::setup,
-                setup_fps_counter,
-            ),
+            (macaw::player::setup, macaw::renderer::skybox::setup),
         )
-        .add_systems(Update, (fps_text_update_system, fps_counter_showhide))
-        //.add_systems(Update, player::player_input_system)
-        .run();
+        .add_systems(Update, macaw::player::player_input_system);
+
+    app.run();
 
     Ok(())
-}
-
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
-) {
-    // enable mouse lock
-    let mut window = window_query.single_mut();
-    window.cursor.grab_mode = CursorGrabMode::Locked;
-
-    // create a light
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(5.0, 8.0, 5.0),
-        ..Default::default()
-    });
-
-    // make the block
-    let cube_mesh = Mesh::from(shape::Cube { size: 2.0 }); // size of the cube
-    let green_material = materials.add(Color::rgb(0.0, 1.0, 0.0).into());
-
-    // spawn that mf
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(cube_mesh),
-        material: green_material.clone(),
-        ..Default::default()
-    });
-
-    let world = macaw::world::generate();
-
-    for (chunk_location, chunk) in world.chunks() {
-        tracing::debug!("chunk: `{chunk_location:?}`");
-
-        for x in 0..16 {
-            for y in 0..16 {
-                for z in 0..16 {
-                    let block_coords = ChunkBlockCoordinate::new(x, y, z);
-                    let block = chunk.get_local_block(&block_coords);
-
-                    if let Some(ref b) = block {
-                        tracing::debug!("block is found! {:?}", &block);
-
-                        let block_coordinates = chunk.global_block_coord(block_coords.clone());
-                        if chunk.is_visible(&block_coords) {
-                            tracing::debug!(
-                                "placing block {b:?} at coords: `{block_coordinates:?}`",
-                            );
-
-                            commands.spawn(PbrBundle {
-                                mesh: meshes.add(Mesh::from(shape::Cube { size: 1_f32 })),
-                                transform: Transform {
-                                    translation: block_coordinates.to_vec3(),
-                                    ..Default::default()
-                                },
-                                material: green_material.clone(),
-                                ..Default::default()
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    tracing::info!("done 'rendering' world");
 }
