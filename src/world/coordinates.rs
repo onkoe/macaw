@@ -85,15 +85,6 @@ impl GlobalCoordinate {
     }
 }
 
-impl Into<GlobalCoordinate2D> for GlobalCoordinate {
-    fn into(self) -> GlobalCoordinate2D {
-        GlobalCoordinate2D {
-            x: self.x,
-            z: self.z,
-        }
-    }
-}
-
 pub struct GlobalCoordinate2D {
     pub x: u64,
     pub z: u64,
@@ -106,5 +97,14 @@ impl GlobalCoordinate2D {
 
     pub fn to_f32_array(&self) -> [f32; 2] {
         [self.x as f32, self.z as f32]
+    }
+}
+
+impl From<GlobalCoordinate> for GlobalCoordinate2D {
+    fn from(value: GlobalCoordinate) -> Self {
+        Self {
+            x: value.x,
+            z: value.z,
+        }
     }
 }
