@@ -9,16 +9,19 @@ edition = "2021"
 built = "0.7.1"
 
 [dependencies]
-anyhow = "1.0.79"
-bevy = { version = "0.12", features = [
-    "dynamic_linking",
-] } # TODO: remove dynlib if released (lol)
+anyhow = "~1.0.79"
+# TODO: remove dynlib if released (lol)
 bevy_editor_pls = "0.7.0"
 bevy_flycam = "0.12.0"
 built = "0.7.1"
 noise = { version = "0.8.2", features = ["std"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dependencies.bevy]
+version = "0.12"
+features = ["dynamic_linking", "bevy_audio"]
+
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

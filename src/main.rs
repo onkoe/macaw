@@ -66,11 +66,10 @@ fn main() -> anyhow::Result<()> {
 
     let mut app = App::new();
 
-    app.add_plugins(DefaultPlugins)
+    app.add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest()),))
         //.add_plugins(NoCameraPlayerPlugin)
         .add_plugins(FrameTimeDiagnosticsPlugin)
-        .add_plugins(MacawUiPlugin)
-        .add_plugins(MacawRendererPlugin)
+        .add_plugins((MacawUiPlugin, MacawRendererPlugin))
         .insert_resource(DirectionalLightShadowMap { size: 2048 })
         .add_systems(
             Startup,
