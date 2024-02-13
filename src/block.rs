@@ -36,3 +36,13 @@ impl Default for BlockType {
         Self::Air
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub enum BlockSide {
+    PositiveX,
+    NegativeX,
+    PositiveY,
+    NegativeY,
+    PositiveZ,
+    NegativeZ,
+}
