@@ -1,5 +1,5 @@
 use super::Chunk;
-use crate::{block::BlockType, world::coordinates::ChunkBlockCoordinate};
+use crate::world::coordinates::ChunkBlockCoordinate;
 
 pub trait Meshing {
     /// Given a location, returns whether or not the thing at that location
@@ -8,11 +8,6 @@ pub trait Meshing {
     /// In other words, this detects if it's on a chunk border or has air
     /// around it.
     fn is_visible(&self, block: &ChunkBlockCoordinate) -> bool;
-
-    // TODO
-    //\ helps us see make literally just one mesh sometimes.
-    //\ so we would have 23905803 fps!
-    // fn has_exposed_sides() -> ExposedSideDirection(s);
 }
 
 impl Meshing for Chunk {
@@ -24,10 +19,8 @@ impl Meshing for Chunk {
         }
 
         // show blocks with air around them
-        // FIXME: this is gonna be fucky with liquids
-        // TODO: check if adjacent block is transparent
         for adj in self.adjacent_blocks(block) {
-            if adj.block_type == BlockType::Air {
+            if adj.is_transparent() {
                 return true;
             }
         }
