@@ -96,18 +96,34 @@ fn setup(mut commands: Commands) {
             },
             ..default()
         })
+        // crosshair (vertical)
         .with_children(|p| {
             p.spawn(NodeBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     display: Display::Flex,
-                    width: Val::Px(16_f32),
-                    height: Val::Px(16_f32),
+                    width: Val::Px(2_f32),
+                    height: Val::Px(24_f32),
                     align_self: AlignSelf::Center,
                     justify_self: JustifySelf::Center,
                     ..default()
                 },
-                background_color: BackgroundColor(Color::RED),
+                background_color: BackgroundColor(Color::GRAY),
+                ..default()
+            });
+
+            // crosshair (horizontal)
+            p.spawn(NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    display: Display::Flex,
+                    width: Val::Px(24_f32),
+                    height: Val::Px(2_f32),
+                    align_self: AlignSelf::Center,
+                    justify_self: JustifySelf::Center,
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::GRAY),
                 ..default()
             });
         })
