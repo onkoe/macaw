@@ -85,7 +85,7 @@ fn setup(mut commands: Commands) {
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
-                            font: asset_server.load("fonts/Monocraft.otf"),
+                            ..Default::default()
                         },
                     }]),
                     ..Default::default()

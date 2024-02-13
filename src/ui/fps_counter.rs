@@ -10,7 +10,7 @@ pub struct FpsRoot;
 #[derive(Component)]
 pub struct FpsText;
 
-pub fn setup_fps_counter(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_fps_counter(mut commands: Commands) {
     let root = commands
         .spawn((
             FpsRoot,
@@ -42,7 +42,7 @@ pub fn setup_fps_counter(mut commands: Commands, asset_server: Res<AssetServer>)
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
-                            font: asset_server.load("fonts/Monocraft.otf"),
+                            ..Default::default()
                         },
                     },
                     TextSection {
@@ -50,7 +50,7 @@ pub fn setup_fps_counter(mut commands: Commands, asset_server: Res<AssetServer>)
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
-                            font: asset_server.load("fonts/Monocraft.otf"),
+                            ..Default::default()
                         },
                     },
                 ]),

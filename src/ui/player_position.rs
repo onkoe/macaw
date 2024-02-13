@@ -8,7 +8,7 @@ pub struct PositionRoot;
 #[derive(Component)]
 pub struct PositionText;
 
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup(mut commands: Commands) {
     let root = commands
         .spawn((
             PositionRoot,
@@ -39,7 +39,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
-                            font: asset_server.load("fonts/Monocraft.otf"),
+                            ..Default::default()
                         },
                     },
                     TextSection {
@@ -47,7 +47,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
-                            font: asset_server.load("fonts/Monocraft.otf"),
+                            ..Default::default()
                         },
                     },
                 ]),
