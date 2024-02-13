@@ -68,9 +68,9 @@ impl World {
             }
         }
 
-        // set second/third layers as dirt
+        // set 2nd-4th layers as dirt
         for x in 0..16 {
-            for y in 13..=14 {
+            for y in 12..=14 {
                 for z in 0..16 {
                     chunk.set_block(
                         Block::new(BlockType::Dirt, 0),
