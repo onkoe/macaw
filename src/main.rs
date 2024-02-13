@@ -53,7 +53,11 @@
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, pbr::DirectionalLightShadowMap, prelude::*};
 
-use macaw::{renderer::MacawRendererPlugin, ui::MacawUiPlugin};
+use macaw::{
+    renderer::MacawRendererPlugin,
+    ui::MacawUiPlugin,
+    util::{built_info::PKG_VERSION, get_pkg_name},
+};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{util::SubscriberInitExt, EnvFilter};
 
@@ -70,16 +74,27 @@ fn main() -> anyhow::Result<()> {
 
     let mut app = App::new();
 
-    app.add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        //.add_plugins(NoCameraPlayerPlugin)
-        .add_plugins(FrameTimeDiagnosticsPlugin)
-        .add_plugins((MacawUiPlugin, MacawRendererPlugin))
-        .insert_resource(DirectionalLightShadowMap { size: 2048 })
-        .add_systems(
-            Startup,
-            (macaw::player::setup, macaw::renderer::skybox::setup),
-        )
-        .add_systems(Update, macaw::player::player_input_system);
+    app.add_plugins(
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest())
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
+                    title: format!("{} Beta {}", get_pkg_name(), PKG_VERSION),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+    )
+    //.add_plugins(NoCameraPlayerPlugin)
+    .add_plugins(FrameTimeDiagnosticsPlugin)
+    .add_plugins((MacawUiPlugin, MacawRendererPlugin))
+    .insert_resource(DirectionalLightShadowMap { size: 2048 })
+    .add_systems(
+        Startup,
+        (macaw::player::setup, macaw::renderer::skybox::setup),
+    )
+    .add_systems(Update, macaw::player::player_input_system);
 
     bevy::asset::load_internal_binary_asset!(
         app,
