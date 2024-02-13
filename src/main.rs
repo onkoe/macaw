@@ -19,6 +19,11 @@
 //! 1. Mods: I'd like to support mods using something like `bevy_wasm`.
 //!    For a closer form of integration, something like [rhai](https://crates.io/crates/rhai)
 //!    might be nice!
+//! 1. Recipe Book: Some crafting element to help users find crafting recipes
+//!    without using the internet would be nice. This would likely look more
+//!    like TooManyItems, though as a small button with a search interface.
+//! 1. Mouse Tricks: I want a lot of the mouse and keyboard inventory binds
+//!    from mods like Item Scroller and from later versions of MC.
 //!
 //!
 //! ## Unplanned Features
@@ -75,6 +80,13 @@ fn main() -> anyhow::Result<()> {
             (macaw::player::setup, macaw::renderer::skybox::setup),
         )
         .add_systems(Update, macaw::player::player_input_system);
+
+    bevy::asset::load_internal_binary_asset!(
+        app,
+        TextStyle::default().font,
+        "../assets/fonts/Monocraft.otf",
+        |bytes: &[u8], _path: String| { Font::try_from_bytes(bytes.to_vec()).unwrap() }
+    );
 
     app.run();
 
