@@ -26,26 +26,24 @@ impl Chunk {
         }
     }
 
-    fn local_block_index(&self, local_coord: &ChunkBlockCoordinate) -> usize {
-        (local_coord.z() as usize) * (16 * 16)
-            + (local_coord.y() as usize) * 16
-            + (local_coord.x() as usize)
+    /// Returns the coordinates of the Chunk.
+    pub fn coords(&self) -> GlobalCoordinate {
+        self.coords
     }
 
-    /// Given a **local coordinate** (i.e. within 16 x 16 x 16), this method
-    /// returns the block from the internal `blocks` vector.
-    ///
-    /// If the block doesn't exist, you'll get `None` back instead.
-    pub fn get_local_block(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
-        // TODO: return a result instead of option lmao
-        self.blocks
-            .get(self.local_block_index(local_coord))
-            .cloned()
+    /// Sets the `Block` at the given `ChunkBlockCoordinate`.
+    pub fn set_block(&mut self, block: Block, coord: ChunkBlockCoordinate) {
+        let index = self.block_index(&coord);
+        self.blocks[index] = block;
     }
 
     /// Given a local coordinate, this method returns a list of blocks that
     /// are surrounding the given block.
     pub fn adjacent_blocks(&self, coord: &ChunkBlockCoordinate) -> Vec<Block> {
+        // -----------------
+        // TODO: REMOVE THIS. WON'T BE USEFUL B/C WE CANT CHECK OTHER CHUNKS
+        // -----------------
+
         let mut blocks = Vec::new();
 
         let movements: [(i8, i8, i8); 6] = [
@@ -66,9 +64,9 @@ impl Chunk {
             );
 
             if (0..16).contains(&nx) && (0..16).contains(&ny) && (0..16).contains(&nz) {
-                if let Some(block) =
-                    self.get_local_block(&ChunkBlockCoordinate::new(nx as u8, ny as u8, nz as u8))
-                {
+                if let Some(block) = self.block_from_local_coords(&ChunkBlockCoordinate::new(
+                    nx as u8, ny as u8, nz as u8,
+                )) {
                     blocks.push(block);
                 }
             }
@@ -77,13 +75,48 @@ impl Chunk {
         blocks
     }
 
+    /// Given a local block coordinate, returns the block's index in the
+    /// `blocks` vector.
+    fn block_index(&self, local_coord: &ChunkBlockCoordinate) -> usize {
+        (local_coord.z() as usize) * (16 * 16)
+            + (local_coord.y() as usize) * 16
+            + (local_coord.x() as usize)
+    }
+
     /// Given a local block coordinate, returns that block's global coordinate.
     pub fn global_block_coord(&self, local_coord: ChunkBlockCoordinate) -> GlobalCoordinate {
         GlobalCoordinate {
-            x: self.coords.x * 16 + local_coord.x() as u64,
-            y: self.coords.y * 16 + local_coord.y() as u64,
-            z: self.coords.z * 16 + local_coord.z() as u64,
+            x: self.coords.x * 16 + local_coord.x() as i64,
+            y: self.coords.y * 16 + local_coord.y() as i64,
+            z: self.coords.z * 16 + local_coord.z() as i64,
         }
+    }
+
+    /// Given a global block coordinate, returns that block.
+    pub fn block_from_global_coords(&mut self, coords: GlobalCoordinate) -> Option<&mut Block> {
+        /// global to local value
+        fn gtl(coords: i64) -> u8 {
+            coords
+                .rem_euclid(16)
+                .try_into()
+                .expect("dividing by 16 will never have a remainder above 15")
+        }
+
+        let index = self.block_index(&ChunkBlockCoordinate::new(
+            gtl(coords.x),
+            gtl(coords.y),
+            gtl(coords.z),
+        ));
+
+        self.blocks.get_mut(index)
+    }
+
+    /// Given a **local coordinate** (i.e. within 16 x 16 x 16), this method
+    /// returns the block from the internal `blocks` vector.
+    ///
+    /// If the block doesn't exist, you'll get `None` back instead.
+    pub fn block_from_local_coords(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
+        self.blocks.get(self.block_index(local_coord)).cloned()
     }
 
     /// Returns all of the global 2D block coordinates within this chunk. (x, z)
