@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut app = App::new();
 
-    app.add_plugins((DefaultPlugins.set(ImagePlugin::default_nearest()),))
+    app.add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         //.add_plugins(NoCameraPlayerPlugin)
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_plugins((MacawUiPlugin, MacawRendererPlugin))

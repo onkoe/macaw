@@ -28,12 +28,12 @@ fn setup(
     let world = world::generate();
 
     let stone_handle: Handle<Image> =
-        assets.load("/home/barrett/Documents/mythic_mining/assets/stone.png");
+        assets.load("/home/barrett/Documents/macaw/assets/cobblestone.png");
 
     let stone_material = materials.add(StandardMaterial {
-        base_color: Color::RED,
         base_color_texture: Some(stone_handle),
-
+        reflectance: 1.0,
+        metallic: 0.0,
         ..Default::default()
     });
 

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bevy::math::Vec3;
 
 /// A coordinate in a chunk. Chunks are 16x16x16, so all values must be in the
@@ -65,14 +67,14 @@ impl ChunkBlockCoordinate {
 /// These can represent a block or even a chunk!
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub struct GlobalCoordinate {
-    pub x: u64,
-    pub y: u64,
-    pub z: u64,
+    pub x: i64,
+    pub y: i64,
+    pub z: i64,
 }
 
 impl GlobalCoordinate {
     /// Creates a `GlobalCoordinate`.
-    pub fn new(x: u64, y: u64, z: u64) -> Self {
+    pub fn new(x: i64, y: i64, z: i64) -> Self {
         Self { x, y, z }
     }
 
@@ -85,13 +87,20 @@ impl GlobalCoordinate {
     }
 }
 
+impl Display for GlobalCoordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let string = format!("{}, {}, {}", self.x, self.y, self.z);
+        f.write_str(&string)
+    }
+}
+
 pub struct GlobalCoordinate2D {
-    pub x: u64,
-    pub z: u64,
+    pub x: i64,
+    pub z: i64,
 }
 
 impl GlobalCoordinate2D {
-    pub fn to_array(&self) -> [u64; 2] {
+    pub fn to_array(&self) -> [i64; 2] {
         [self.x, self.z]
     }
 

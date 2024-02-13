@@ -103,12 +103,9 @@ pub fn player_input_system(
                 n_yaw -= motion.delta.y * SENS.1;
             }
 
-            //Apply yaw rotation (around the y-axis)
             let yaw = Quat::from_rotation_y(-n_pitch.to_radians());
             transform.rotation = yaw * transform.rotation;
 
-            //Apply pitch rotation (around the x-axis)
-            //Calculate the current pitch to constrain the camera from flipping over
             let current_pitch: f32 = transform.rotation.to_euler(EulerRot::XYZ).1;
             let new_pitch = (current_pitch + n_yaw.to_radians())
                 .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2);

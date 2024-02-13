@@ -38,7 +38,7 @@ impl Plugin for MacawUiPlugin {
 }
 
 /// Builds the major UI elements.
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle {
         camera_2d: Camera2d {
             clear_color: ClearColorConfig::None,
