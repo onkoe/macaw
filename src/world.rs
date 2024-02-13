@@ -10,7 +10,9 @@ pub mod coordinates;
 pub mod generation;
 pub mod meshing;
 
+/// A representation of a game world. Holds game state and loaded chunks/entities.
 pub struct World {
+    /// Loaded chunks in the world.
     chunks: HashMap<GlobalCoordinate, Chunk>,
 }
 
