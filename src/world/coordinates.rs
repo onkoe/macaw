@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use bevy::math::Vec3;
 
+pub const ORIGIN: GlobalCoordinate = GlobalCoordinate::new(0, 0, 0);
+
 /// A coordinate in a chunk. Chunks are 16x16x16, so all values must be in the
 /// range [0, 15].
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
@@ -74,7 +76,7 @@ pub struct GlobalCoordinate {
 
 impl GlobalCoordinate {
     /// Creates a `GlobalCoordinate`.
-    pub fn new(x: i64, y: i64, z: i64) -> Self {
+    pub const fn new(x: i64, y: i64, z: i64) -> Self {
         Self { x, y, z }
     }
 
