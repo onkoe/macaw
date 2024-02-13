@@ -2,18 +2,13 @@ use bevy::{asset::LoadState, prelude::*};
 
 /// A representation of whether or not the project has completed the loading
 /// process for filesystem resources.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, States)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, States)]
 pub enum LoaderState {
     /// The project hasn't finished loading all resources.
+    #[default]
     Loading,
     /// All resources are loaded!
     Complete,
-}
-
-impl Default for LoaderState {
-    fn default() -> Self {
-        LoaderState::Loading
-    }
 }
 
 /// A list of assets that the loader will handle.
@@ -58,6 +53,7 @@ impl MacawLoaderPlugin {
             .iter()
             .all(|h| asset_server.get_load_state(h.id()) == Some(LoadState::Loaded))
         {
+            tracing::info!("All assets have completed loading!");
             state.0 = Some(LoaderState::Complete);
         }
     }
@@ -65,7 +61,11 @@ impl MacawLoaderPlugin {
 
 impl Plugin for MacawLoaderPlugin {
     fn build(&self, app: &mut App) {
+        app.add_state::<LoaderState>();
         app.add_systems(Startup, MacawLoaderPlugin::load);
-        app.add_systems(Update, MacawLoaderPlugin::check_progress);
+        app.add_systems(
+            Update,
+            MacawLoaderPlugin::check_progress.run_if(state_exists_and_equals(LoaderState::Loading)),
+        );
     }
 }
