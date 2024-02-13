@@ -1,13 +1,10 @@
 use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
 use bevy_editor_pls::EditorPlugin;
 
+use crate::util::{built_info::PKG_VERSION, get_pkg_name};
+
 mod fps_counter;
 mod player_position;
-
-/// Information about Cargo.toml.
-pub mod built_info {
-    include!(concat!(env!("OUT_DIR"), "/built.rs"));
-}
 
 pub struct MacawUiPlugin;
 
@@ -53,11 +50,6 @@ fn setup(mut commands: Commands) {
     // version info (top left)
 
     // capitalize game name no matter what :3
-    let pkg_name = format!(
-        "{}{}",
-        (built_info::PKG_NAME[..1]).to_uppercase(),
-        &built_info::PKG_NAME[1..]
-    );
 
     commands
         .spawn(NodeBundle {
@@ -81,7 +73,7 @@ fn setup(mut commands: Commands) {
             .with_children(|p| {
                 p.spawn(TextBundle {
                     text: Text::from_sections([TextSection {
-                        value: format!("{} Beta {}", &pkg_name, built_info::PKG_VERSION),
+                        value: format!("{} Beta {}", get_pkg_name(), PKG_VERSION),
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
