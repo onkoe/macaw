@@ -90,10 +90,7 @@ fn main() -> anyhow::Result<()> {
     .add_plugins(FrameTimeDiagnosticsPlugin)
     .add_plugins((MacawUiPlugin, MacawRendererPlugin))
     .insert_resource(DirectionalLightShadowMap { size: 2048 })
-    .add_systems(
-        Startup,
-        (macaw::player::setup, macaw::renderer::skybox::setup),
-    )
+    .add_systems(Startup, macaw::player::setup)
     .add_systems(Update, macaw::player::player_input_system);
 
     bevy::asset::load_internal_binary_asset!(

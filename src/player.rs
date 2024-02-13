@@ -24,33 +24,39 @@ pub fn player_input_system(
 ) {
     let mut window = window_query.single_mut();
 
-    const MOVEMENT_SPEED: f32 = 1.0; // was 0.2 lol
-
     for mut transform in keyboard_query.iter_mut() {
         let mut direction = Vec3::ZERO;
 
+        fn get_movement_speed(keyboard_input: &Res<Input<KeyCode>>) -> f32 {
+            if keyboard_input.pressed(KeyCode::ControlLeft) {
+                1.0
+            } else {
+                0.2
+            }
+        }
+
         if keyboard_input.pressed(KeyCode::W) {
-            direction.z -= MOVEMENT_SPEED;
+            direction.z -= get_movement_speed(&keyboard_input);
             tracing::debug!("w pressed, position: {}", transform.translation);
         }
 
         if keyboard_input.pressed(KeyCode::A) {
-            direction.x -= MOVEMENT_SPEED;
+            direction.x -= get_movement_speed(&keyboard_input);
             tracing::debug!("a pressed, position: {}", transform.translation);
         }
 
         if keyboard_input.pressed(KeyCode::S) {
-            direction.z += MOVEMENT_SPEED;
+            direction.z += get_movement_speed(&keyboard_input);
             tracing::debug!("s pressed, position: {}", transform.translation);
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            direction.x += MOVEMENT_SPEED;
+            direction.x += get_movement_speed(&keyboard_input);
             tracing::debug!("d pressed, position: {}", transform.translation);
         }
 
         if direction != Vec3::ZERO {
-            direction = direction.normalize() * MOVEMENT_SPEED;
+            direction = direction.normalize() * get_movement_speed(&keyboard_input);
         }
 
         // fix movement lol
@@ -58,12 +64,12 @@ pub fn player_input_system(
         transform.translation += rotated_direction;
 
         if keyboard_input.pressed(KeyCode::ShiftLeft) {
-            transform.translation.y -= 1.0;
+            transform.translation.y -= get_movement_speed(&keyboard_input) / 5.0;
             tracing::debug!("lshift pressed, position: {}", transform.translation);
         }
 
         if keyboard_input.pressed(KeyCode::Space) {
-            transform.translation.y += MOVEMENT_SPEED;
+            transform.translation.y += get_movement_speed(&keyboard_input) / 5.0;
             tracing::debug!("space pressed, position: {}", transform.translation);
         }
 
@@ -90,6 +96,7 @@ pub fn player_input_system(
             // TODO: actually do that
 
             transform.translation = Default::default();
+            transform.rotation = Default::default();
         }
 
         if window.cursor.grab_mode == CursorGrabMode::Locked {
@@ -123,7 +130,7 @@ pub fn setup(mut commands: Commands) {
                 uuid: Uuid::new_v4(),
                 username: "Player".to_owned(),
             },
-            Transform::from_xyz(10.0, 12.0, 16.0),
+            Transform::from_xyz(0.0, 17.0, 10.0),
             GlobalTransform::default(),
         ))
         .insert(Name::new("Player"))
