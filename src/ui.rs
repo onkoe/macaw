@@ -51,6 +51,14 @@ fn setup(mut commands: Commands) {
     });
 
     // version info (top left)
+
+    // capitalize game name no matter what :3
+    let pkg_name = format!(
+        "{}{}",
+        (built_info::PKG_NAME[..1]).to_uppercase(),
+        &built_info::PKG_NAME[1..]
+    );
+
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -73,7 +81,7 @@ fn setup(mut commands: Commands) {
             .with_children(|p| {
                 p.spawn(TextBundle {
                     text: Text::from_sections([TextSection {
-                        value: format!("{} Beta {}", built_info::PKG_NAME, built_info::PKG_VERSION),
+                        value: format!("{} Beta {}", &pkg_name, built_info::PKG_VERSION),
                         style: TextStyle {
                             font_size: 16.0,
                             color: Color::WHITE,
