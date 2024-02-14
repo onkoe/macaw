@@ -34,7 +34,7 @@ impl MacawLoaderPlugin {
     /// Begins loading resources.
     fn load(mut commands: Commands, asset_server: Res<AssetServer>) {
         let loader_assets = LoaderAssets::new(vec![asset_server
-            .load::<Image>("skybox/skybox-vert.png")
+            .load::<Image>("skybox/skybox.png")
             .untyped()]);
 
         // add our asset list to global resources
