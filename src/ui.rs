@@ -13,7 +13,7 @@ impl Plugin for MacawUiPlugin {
         app.add_systems(
             Startup,
             (
-                setup,
+                Self::setup,
                 player_position::setup,
                 fps_counter::setup_fps_counter,
             ),
@@ -34,111 +34,113 @@ impl Plugin for MacawUiPlugin {
     }
 }
 
-/// Builds the major UI elements.
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle {
-        camera_2d: Camera2d {
-            clear_color: ClearColorConfig::None,
-        },
-        camera: Camera {
-            order: 1,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    // version info (top left)
-
-    // capitalize game name no matter what :3
-
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
+impl MacawUiPlugin {
+    /// Builds the major UI elements.
+    fn setup(mut commands: Commands) {
+        commands.spawn(Camera2dBundle {
+            camera_2d: Camera2d {
+                clear_color: ClearColorConfig::None,
+            },
+            camera: Camera {
+                order: 1,
                 ..Default::default()
             },
             ..Default::default()
-        })
-        .with_children(|p| {
-            p.spawn(NodeBundle {
+        });
+
+        // version info (top left)
+
+        // capitalize game name no matter what :3
+
+        commands
+            .spawn(NodeBundle {
                 style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Auto,
-                    left: Val::ZERO,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
                     ..Default::default()
                 },
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn(TextBundle {
-                    text: Text::from_sections([TextSection {
-                        value: format!("{} Beta {}", get_pkg_name(), PKG_VERSION),
-                        style: TextStyle {
-                            font_size: 16.0,
-                            color: Color::WHITE,
-                            ..Default::default()
-                        },
-                    }]),
+                p.spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        width: Val::Auto,
+                        left: Val::ZERO,
+                        ..Default::default()
+                    },
                     ..Default::default()
+                })
+                .with_children(|p| {
+                    p.spawn(TextBundle {
+                        text: Text::from_sections([TextSection {
+                            value: format!("{} Beta {}", get_pkg_name(), PKG_VERSION),
+                            style: TextStyle {
+                                font_size: 16.0,
+                                color: Color::WHITE,
+                                ..Default::default()
+                            },
+                        }]),
+                        ..Default::default()
+                    });
                 });
             });
-        });
 
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            ..default()
-        })
-        // crosshair (vertical)
-        .with_children(|p| {
-            p.spawn(NodeBundle {
+        commands
+            .spawn(NodeBundle {
                 style: Style {
-                    position_type: PositionType::Absolute,
-                    display: Display::Flex,
-                    width: Val::Px(2_f32),
-                    height: Val::Px(24_f32),
-                    align_self: AlignSelf::Center,
-                    justify_self: JustifySelf::Center,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: BackgroundColor(Color::GRAY),
                 ..default()
-            });
+            })
+            // crosshair (vertical)
+            .with_children(|p| {
+                p.spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        display: Display::Flex,
+                        width: Val::Px(2_f32),
+                        height: Val::Px(24_f32),
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        ..default()
+                    },
+                    background_color: BackgroundColor(Color::GRAY),
+                    ..default()
+                });
 
-            // crosshair (horizontal)
-            p.spawn(NodeBundle {
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    display: Display::Flex,
-                    width: Val::Px(24_f32),
-                    height: Val::Px(2_f32),
-                    align_self: AlignSelf::Center,
-                    justify_self: JustifySelf::Center,
+                // crosshair (horizontal)
+                p.spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        display: Display::Flex,
+                        width: Val::Px(24_f32),
+                        height: Val::Px(2_f32),
+                        align_self: AlignSelf::Center,
+                        justify_self: JustifySelf::Center,
+                        ..default()
+                    },
+                    background_color: BackgroundColor(Color::GRAY),
                     ..default()
-                },
-                background_color: BackgroundColor(Color::GRAY),
-                ..default()
-            });
-        })
-        .with_children(|parent| {
-            // left vertical fill (border)
-            parent.spawn(NodeBundle {
-                style: Style {
-                    width: Val::Px(400_f32),
-                    height: Val::Px(48_f32),
-                    border: UiRect::all(Val::Px(2_f32)),
-                    align_self: AlignSelf::End,
+                });
+            })
+            .with_children(|parent| {
+                // left vertical fill (border)
+                parent.spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(400_f32),
+                        height: Val::Px(48_f32),
+                        border: UiRect::all(Val::Px(2_f32)),
+                        align_self: AlignSelf::End,
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.65, 0.65, 0.65).into(),
                     ..default()
-                },
-                background_color: Color::rgb(0.65, 0.65, 0.65).into(),
-                ..default()
+                });
             });
-        });
+    }
 }
