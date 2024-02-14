@@ -54,13 +54,12 @@ impl Player {
     }
 
     /// Controls the player using application input.
-    ///
-    /// FIXME: movement amount currently depends on frame rate!
     pub fn player_input_system(
         mut mouse_input: EventReader<MouseMotion>,
         keyboard_input: Res<Input<KeyCode>>,
         mut keyboard_query: Query<&mut Transform, With<Player>>,
         mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+        time: Res<Time>,
     ) {
         // TODO: fix this giant method lol
 
@@ -78,22 +77,22 @@ impl Player {
             }
 
             if keyboard_input.pressed(KeyCode::W) {
-                direction.z -= get_movement_speed(&keyboard_input);
+                direction.z -= time.delta_seconds() / get_movement_speed(&keyboard_input);
                 tracing::debug!("w pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::A) {
-                direction.x -= get_movement_speed(&keyboard_input);
+                direction.x -= time.delta_seconds() / get_movement_speed(&keyboard_input);
                 tracing::debug!("a pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::S) {
-                direction.z += get_movement_speed(&keyboard_input);
+                direction.z += time.delta_seconds() / get_movement_speed(&keyboard_input);
                 tracing::debug!("s pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::D) {
-                direction.x += get_movement_speed(&keyboard_input);
+                direction.x += time.delta_seconds() / get_movement_speed(&keyboard_input);
                 tracing::debug!("d pressed, position: {}", transform.translation);
             }
 
@@ -106,12 +105,14 @@ impl Player {
             transform.translation += rotated_direction;
 
             if keyboard_input.pressed(KeyCode::ShiftLeft) {
-                transform.translation.y -= get_movement_speed(&keyboard_input) / 5.0;
+                transform.translation.y -=
+                    time.delta_seconds() / (get_movement_speed(&keyboard_input) / 5.0);
                 tracing::debug!("lshift pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::Space) {
-                transform.translation.y += get_movement_speed(&keyboard_input) / 5.0;
+                transform.translation.y +=
+                    time.delta_seconds() / (get_movement_speed(&keyboard_input) / 5.0);
                 tracing::debug!("space pressed, position: {}", transform.translation);
             }
 
