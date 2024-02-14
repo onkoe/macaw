@@ -10,7 +10,6 @@ built = "0.7.1"
 
 [dependencies]
 anyhow = "~1.0.79"
-# TODO: remove dynlib if released (lol)
 bevy_editor_pls = "0.7.0"
 built = "0.7.1"
 noise = { version = "0.8.2", features = ["std"] }
@@ -20,6 +19,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dependencies.bevy]
 version = "0.12"
+# TODO: remove dynlib if released (lol)
 features = ["dynamic_linking", "bevy_audio"]
 
 

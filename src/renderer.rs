@@ -2,14 +2,12 @@ use bevy::{
     prelude::*,
     window::{CursorGrabMode, PrimaryWindow},
 };
-use bevy_editor_pls::egui::epaint::text;
 
 use crate::{
     block::{self, BlockSide},
     world::{
         self,
         coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
-        meshing::Meshing,
     },
 };
 
