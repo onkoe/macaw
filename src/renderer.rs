@@ -4,13 +4,15 @@ use bevy::{
 };
 
 use crate::{
-    block::{self, BlockSide},
+    block::{self, BlockSide, BlockType},
     world::{
         self,
+        chunk::CHUNK_LENGTH,
         coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
     },
 };
 
+mod meshing;
 pub mod skybox;
 
 pub struct MacawRendererPlugin;
@@ -32,7 +34,9 @@ impl MacawRendererPlugin {
         // enable mouse lock
         let mut window = window_query.single_mut();
         window.cursor.grab_mode = CursorGrabMode::Locked;
-        let world = world::World::generate_test_chunk();
+
+        //let world = world::World::generate_test_chunk();
+        let mut world = crate::world::generation::Generate::testing_world();
 
         fn handle_builder(assets: &Res<AssetServer>, path: &str) -> Handle<Image> {
             assets.load(path.to_owned())
@@ -64,11 +68,26 @@ impl MacawRendererPlugin {
         for (chunk_location, chunk) in world.chunks().clone() {
             tracing::debug!("chunk: `{chunk_location:?}`");
 
-            for x in 0..16 {
-                for y in 0..16 {
-                    for z in 0..16 {
-                        let block =
-                            chunk.block_from_local_coords(&ChunkBlockCoordinate::new(x, y, z));
+            let chunk_corner = chunk_location.to_vec3() * 16.0;
+            tracing::info!("adding chunk at {}", chunk_location);
+
+            /*commands.spawn(PbrBundle {
+                mesh: meshes.add(meshing::create_mesh(chunk)),
+                transform: Transform {
+                    translation: chunk_corner,
+                    ..Default::default()
+                },
+                // material: TODO!
+                material: stone_material.clone(),
+                ..Default::default()
+            });*/
+
+            // here
+
+            for x in 0..CHUNK_LENGTH {
+                for y in 0..CHUNK_LENGTH {
+                    for z in 0..CHUNK_LENGTH {
+                        let block = chunk.block(&ChunkBlockCoordinate::new(x, y, z));
 
                         if let Some(ref b) = block {
                             let block_coordinates =
@@ -90,23 +109,30 @@ impl MacawRendererPlugin {
                                 )
                             }*/
 
-                            commands.spawn(PbrBundle {
-                                mesh: meshes.add(Mesh::from(shape::Cube { size: 1_f32 })),
-                                transform: Transform {
-                                    translation: block_coordinates.to_vec3(),
-                                    ..Default::default()
-                                },
-                                material: match b.block_type {
-                                    block::BlockType::Grass => grass_material.clone(),
-                                    block::BlockType::Dirt => dirt_material.clone(),
-                                    _ => stone_material.clone(),
-                                },
-                                ..Default::default()
-                            });
+                            // don't render air :3
+                            match &b.block_type {
+                                &BlockType::Air => (),
+                                _ => {
+                                    commands.spawn(PbrBundle {
+                                        mesh: meshes.add(Mesh::from(shape::Cube { size: 1_f32 })),
+                                        transform: Transform {
+                                            translation: block_coordinates.to_vec3(),
+                                            ..Default::default()
+                                        },
+                                        material: match b.block_type {
+                                            block::BlockType::Grass => grass_material.clone(),
+                                            block::BlockType::Dirt => dirt_material.clone(),
+                                            _ => stone_material.clone(),
+                                        },
+                                        ..Default::default()
+                                    });
+                                }
+                            }
                         }
                     }
                 }
             }
+            // here
         }
 
         tracing::info!("done 'rendering' world");
