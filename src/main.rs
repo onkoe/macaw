@@ -24,6 +24,7 @@
 //!    like TooManyItems, though as a small button with a search interface.
 //! 1. Mouse Tricks: I want a lot of the mouse and keyboard inventory binds
 //!    from mods like Item Scroller and from later versions of MC.
+//! 1. 'Infinite' render distance, like with Distant Horizons.
 //!
 //!
 //! ## Unplanned Features

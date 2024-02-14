@@ -46,3 +46,20 @@ pub enum BlockSide {
     PositiveZ,
     NegativeZ,
 }
+
+impl BlockSide {
+    /// Returns the position offset of a block's neighbor on this side.
+    ///
+    /// For example, a block at (x: 5, y: 68, z: 70) looking at the blockside
+    /// of their +X neighbor will get back (6, 68, 70).
+    pub fn position_offset(&self) -> (i8, i8, i8) {
+        match self {
+            BlockSide::PositiveX => (1, 0, 0),
+            BlockSide::NegativeX => (-1, 0, 0),
+            BlockSide::PositiveY => (0, 1, 0),
+            BlockSide::NegativeY => (0, -1, 0),
+            BlockSide::PositiveZ => (0, 0, 1),
+            BlockSide::NegativeZ => (0, 0, -1),
+        }
+    }
+}

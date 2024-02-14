@@ -1,7 +1,10 @@
-use crate::block::Block;
+use crate::block::{Block, BlockSide};
 
 use super::GlobalCoordinate;
 use crate::{world::coordinates::ChunkBlockCoordinate, world::coordinates::GlobalCoordinate2D};
+
+/// The height, width, and *length* of all chunks.
+pub const CHUNK_LENGTH: u8 = 16;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub struct Chunk {
@@ -40,39 +43,41 @@ impl Chunk {
     /// Given a local coordinate, this method returns a list of blocks that
     /// are surrounding the given block.
     pub fn adjacent_blocks(&self, coord: &ChunkBlockCoordinate) -> Vec<Block> {
-        // -----------------
-        // TODO: REMOVE THIS. WON'T BE USEFUL B/C WE CANT CHECK OTHER CHUNKS
-        // -----------------
-
         let mut blocks = Vec::new();
 
-        let movements: [(i8, i8, i8); 6] = [
-            (1, 0, 0),  // right
-            (-1, 0, 0), // left
-            (0, 1, 0),  // up
-            (0, -1, 0), // down
-            (0, 0, 1),  // forward
-            (0, 0, -1), // back
+        use BlockSide::*; // this is code smell but it makes my eyes happier
+
+        let movements = [
+            PositiveX, NegativeX, PositiveY, NegativeY, PositiveZ, NegativeZ,
         ];
 
         // for each adjacent block, push to blocks vec
-        for (mx, my, mz) in movements {
-            let (nx, ny, nz) = (
-                coord.x() as i8 + mx,
-                coord.y() as i8 + my,
-                coord.z() as i8 + mz,
-            );
-
-            if (0..16).contains(&nx) && (0..16).contains(&ny) && (0..16).contains(&nz) {
-                if let Some(block) = self.block_from_local_coords(&ChunkBlockCoordinate::new(
-                    nx as u8, ny as u8, nz as u8,
-                )) {
-                    blocks.push(block);
-                }
+        for side in movements {
+            if let Some(block) = self.adjacent_block(coord, side) {
+                blocks.push(block);
             }
         }
 
         blocks
+    }
+
+    /// Finds the block next to the specified block in this chunk, should it
+    /// exist.
+    pub fn adjacent_block(&self, coord: &ChunkBlockCoordinate, side: BlockSide) -> Option<Block> {
+        let (mut x, mut y, mut z) = side.position_offset();
+
+        x += coord.x() as i8;
+        y += coord.y() as i8;
+        z += coord.z() as i8;
+
+        if (0..16).contains(&x) && (0..16).contains(&y) && (0..16).contains(&z) {
+            if let Some(block) =
+                self.block_from_local_coords(&ChunkBlockCoordinate::new(x as u8, y as u8, z as u8))
+            {
+                return Some(block);
+            }
+        }
+        None
     }
 
     /// Given a local block coordinate, returns the block's index in the
@@ -85,22 +90,24 @@ impl Chunk {
 
     /// Given a local block coordinate, returns that block's global coordinate.
     pub fn global_block_coord(&self, local_coord: ChunkBlockCoordinate) -> GlobalCoordinate {
+        let local_to_global = |cc: i64, l: u8| -> i64 { cc * 16 + l as i64 };
+
         GlobalCoordinate {
-            x: self.coords.x * 16 + local_coord.x() as i64,
-            y: self.coords.y * 16 + local_coord.y() as i64,
-            z: self.coords.z * 16 + local_coord.z() as i64,
+            x: local_to_global(self.coords.x, local_coord.x()),
+            y: local_to_global(self.coords.y, local_coord.y()),
+            z: local_to_global(self.coords.z, local_coord.z()),
         }
     }
 
     /// Given a global block coordinate, returns that block.
     pub fn block_from_global_coords(&mut self, coords: GlobalCoordinate) -> Option<&mut Block> {
-        /// global to local value
-        fn gtl(coords: i64) -> u8 {
+        // global to local value
+        let gtl = |coords: i64| -> u8 {
             coords
                 .rem_euclid(16)
                 .try_into()
                 .expect("dividing by 16 will never have a remainder above 15")
-        }
+        };
 
         let index = self.block_index(&ChunkBlockCoordinate::new(
             gtl(coords.x),
