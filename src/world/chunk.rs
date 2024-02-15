@@ -34,6 +34,29 @@ impl Chunk {
         self.coords
     }
 
+    /// Gives out a list of blocks in the chunk with their coordinates.
+    ///
+    /// This doesn't include `None` 'blocks' or Air blocks.
+    pub fn blocks(&self) -> Vec<(ChunkBlockCoordinate, Block)> {
+        let mut blocks = Vec::new();
+
+        for x in 0..CHUNK_LENGTH {
+            for y in 0..CHUNK_LENGTH {
+                for z in 0..CHUNK_LENGTH {
+                    let coord = ChunkBlockCoordinate::new(x, y, z);
+
+                    if let Some(b) = self.block(&coord) {
+                        if b.block_type != BlockType::Air {
+                            blocks.push((coord, b));
+                        }
+                    }
+                }
+            }
+        }
+
+        blocks
+    }
+
     /// Sets the `Block` at the given `ChunkBlockCoordinate`.
     pub fn set_block(&mut self, block: Block, coord: ChunkBlockCoordinate) {
         let index = self.block_index(&coord);
@@ -71,9 +94,7 @@ impl Chunk {
         z += coord.z() as i8;
 
         if (0..16).contains(&x) && (0..16).contains(&y) && (0..16).contains(&z) {
-            if let Some(block) =
-                self.block_from_local_coords(&ChunkBlockCoordinate::new(x as u8, y as u8, z as u8))
-            {
+            if let Some(block) = self.block(&ChunkBlockCoordinate::new(x as u8, y as u8, z as u8)) {
                 return Some(block);
             }
         }
@@ -82,7 +103,7 @@ impl Chunk {
 
     /// Given a local block coordinate, returns the block's index in the
     /// `blocks` vector.
-    fn block_index(&self, local_coord: &ChunkBlockCoordinate) -> usize {
+    pub(crate) fn block_index(&self, local_coord: &ChunkBlockCoordinate) -> usize {
         (local_coord.z() as usize) * (16 * 16)
             + (local_coord.y() as usize) * 16
             + (local_coord.x() as usize)
@@ -119,10 +140,10 @@ impl Chunk {
     }
 
     /// Given a **local coordinate** (i.e. within 16 x 16 x 16), this method
-    /// returns the block from the internal `blocks` vector.
+    /// gets the block from the internal `blocks` vector.
     ///
     /// If the block doesn't exist, you'll get `None` back instead.
-    pub fn block_from_local_coords(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
+    pub fn block(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
         self.blocks.get(self.block_index(local_coord)).cloned()
     }
 
