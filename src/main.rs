@@ -52,7 +52,15 @@
 //!    monitor's specs (2160p144).
 //! 1. with warranty.
 
-use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, pbr::DirectionalLightShadowMap, prelude::*};
+use bevy::{
+    diagnostic::FrameTimeDiagnosticsPlugin,
+    pbr::{wireframe::WireframeConfig, DirectionalLightShadowMap},
+    prelude::*,
+    render::{
+        settings::{RenderCreation, WgpuFeatures, WgpuSettings},
+        RenderPlugin,
+    },
+};
 
 use macaw::{
     loader::MacawLoaderPlugin,
@@ -87,9 +95,14 @@ fn main() -> anyhow::Result<()> {
                     ..Default::default()
                 }),
                 ..Default::default()
+            })
+            .set(RenderPlugin {
+                render_creation: RenderCreation::Automatic(WgpuSettings {
+                    features: WgpuFeatures::POLYGON_MODE_LINE,
+                    ..default()
+                }),
             }),
     )
-    //.add_plugins(NoCameraPlayerPlugin)
     .add_plugins((
         MacawLoaderPlugin,
         FrameTimeDiagnosticsPlugin,
@@ -97,7 +110,15 @@ fn main() -> anyhow::Result<()> {
         MacawRendererPlugin,
         MacawPlayerPlugin,
     ))
-    .insert_resource(DirectionalLightShadowMap { size: 2048 });
+    .insert_resource(DirectionalLightShadowMap { size: 2048 })
+    .insert_resource(AmbientLight {
+        color: Color::WHITE,
+        brightness: 1.0,
+    })
+    .insert_resource(WireframeConfig {
+        global: true,
+        default_color: Color::WHITE,
+    });
 
     bevy::asset::load_internal_binary_asset!(
         app,
