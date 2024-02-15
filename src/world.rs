@@ -18,6 +18,7 @@ pub mod generation;
 pub mod meshing;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct World {
     /// Loaded chunks in the world.
     chunks: HashMap<GlobalCoordinate, Chunk>,
@@ -50,6 +51,24 @@ impl World {
             chunks,
             _entities: (),
             spawn_location: (0.0, 18.0, 0.0),
+        }
+    }
+
+    pub fn one_test_block() -> World {
+        let chunk_coordinate = GlobalCoordinate::new(0, 0, 0);
+        let mut chunk = Chunk::new(chunk_coordinate);
+        chunk.set_block(
+            Block::new(BlockType::Grass, 0),
+            ChunkBlockCoordinate::new(0, 0, 0),
+        );
+
+        let mut map = HashMap::new();
+        map.insert(chunk_coordinate, chunk);
+
+        World {
+            chunks: map,
+            _entities: (),
+            spawn_location: (0.0, 0.0, 0.0),
         }
     }
 
