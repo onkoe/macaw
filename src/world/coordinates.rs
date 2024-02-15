@@ -2,11 +2,15 @@ use std::fmt::Display;
 
 use bevy::math::Vec3;
 
+use crate::block::BlockSide;
+
+use super::chunk::CHUNK_LENGTH;
+
 pub const ORIGIN: GlobalCoordinate = GlobalCoordinate::new(0, 0, 0);
 
 /// A coordinate in a chunk. Chunks are 16x16x16, so all values must be in the
 /// range [0, 15].
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub struct ChunkBlockCoordinate {
     x: u8,
     y: u8,
@@ -39,6 +43,54 @@ impl ChunkBlockCoordinate {
         self.z
     }
 
+    /// Checks to see if a potential 'next' block is a neighbor of this one.
+    pub fn is_directional_neighbor(
+        &self,
+        next: &ChunkBlockCoordinate,
+        direction: &BlockSide,
+    ) -> bool {
+        match direction {
+            BlockSide::PositiveX => self.x + 1 == next.x,
+            BlockSide::NegativeX => self.x - 1 == next.x,
+            BlockSide::PositiveY => self.y + 1 == next.y,
+            BlockSide::NegativeY => self.y - 1 == next.y,
+            BlockSide::PositiveZ => self.z + 1 == next.z,
+            BlockSide::NegativeZ => self.z - 1 == next.z,
+        }
+    }
+
+    /// Given a direction to move in, this method returns the 'next' block in that direction.
+    pub fn next(&self, direction: &BlockSide) -> Option<ChunkBlockCoordinate> {
+        let mut x = self.x();
+        let mut y = self.y();
+        let mut z = self.z();
+
+        match direction {
+            BlockSide::PositiveX => x += 1,
+            BlockSide::NegativeX => x -= 1,
+            BlockSide::PositiveY => y += 1,
+            BlockSide::NegativeY => y -= 1,
+            BlockSide::PositiveZ => z += 1,
+            BlockSide::NegativeZ => z -= 1,
+        };
+
+        let n = Self { x, y, z };
+
+        if n.any(|v| v >= CHUNK_LENGTH) {
+            None
+        } else {
+            Some(n)
+        }
+    }
+
+    pub fn to_vec3(&self) -> Vec3 {
+        Vec3 {
+            x: self.x as f32,
+            y: self.y as f32,
+            z: self.z as f32,
+        }
+    }
+
     /// If any of the contained coordinates match a given closure's comparison,
     /// this function will return true.
     ///
@@ -64,10 +116,19 @@ impl ChunkBlockCoordinate {
     }
 }
 
+impl Display for ChunkBlockCoordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!(
+            "ChunkBlockCoordinate(x: {}, y: {}, z: {})",
+            self.x, self.y, self.z
+        ))
+    }
+}
+
 /// A coordinate found in the world - globally.
 ///
 /// These can represent a block or even a chunk!
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct GlobalCoordinate {
     pub x: i64,
     pub y: i64,
@@ -96,6 +157,7 @@ impl Display for GlobalCoordinate {
     }
 }
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct GlobalCoordinate2D {
     pub x: i64,
     pub z: i64,
