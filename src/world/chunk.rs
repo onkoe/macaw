@@ -1,4 +1,4 @@
-use crate::block::{Block, BlockSide};
+use crate::block::{Block, BlockSide, BlockType};
 
 use super::GlobalCoordinate;
 use crate::{world::coordinates::ChunkBlockCoordinate, world::coordinates::GlobalCoordinate2D};
