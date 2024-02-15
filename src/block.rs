@@ -71,12 +71,12 @@ impl Block {
         uvs
     }
 
-    /// Gives the indicies (reusable verticies) for this block.
+    /// Gives the indices (reusable verticies) for this block.
     ///
-    /// These can be combined with other block's indicies, filtering out
+    /// These can be combined with other block's indices, filtering out
     /// verticies that appear on the same edge as others that are futher apart.
     #[rustfmt::skip]
-    pub fn indicies(&self, index_offset: u32) -> Vec<Face> {
+    pub fn indices(&self, index_offset: u32) -> Vec<Face> {
         // TODO: this'll need presets for different kinds of blocks, like stairs
 
         vec![
