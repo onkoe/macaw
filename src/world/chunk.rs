@@ -1,7 +1,7 @@
 use crate::block::{Block, BlockSide, BlockType};
 
 use super::GlobalCoordinate;
-use crate::{world::coordinates::ChunkBlockCoordinate, world::coordinates::GlobalCoordinate2D};
+use crate::world::coordinates::ChunkBlockCoordinate;
 
 /// The height, width, and *length* of all chunks.
 pub const CHUNK_LENGTH: u8 = 16;
@@ -145,18 +145,5 @@ impl Chunk {
     /// If the block doesn't exist, you'll get `None` back instead.
     pub fn block(&self, local_coord: &ChunkBlockCoordinate) -> Option<Block> {
         self.blocks.get(self.block_index(local_coord)).cloned()
-    }
-
-    /// Returns all of the global 2D block coordinates within this chunk. (x, z)
-    pub fn all_global_block_coordinates(&self) -> Vec<GlobalCoordinate2D> {
-        let mut v = Vec::new();
-
-        for x in 0..16 {
-            for z in 0..16 {
-                v.push(GlobalCoordinate2D { x, z });
-            }
-        }
-
-        v
     }
 }

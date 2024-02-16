@@ -2,7 +2,7 @@
 //!
 //! Some utilities to help with creating meshes in Macaw.
 
-use crate::block::Block;
+use crate::block::{Block, BlockType};
 use crate::world::chunk::Chunk;
 use crate::world::coordinates::ChunkBlockCoordinate;
 use bevy::math::{Vec2, Vec3};
@@ -53,29 +53,61 @@ impl MeshConstruct {
         // TODO: find rectangles and make them into two triangles. this means we gotta clean up 'extra' uvs
         self.uvs.extend(other.uvs);
 
-        // indices
-        // TODO: when you find two triangles on a square surface, kill all the others >:3
+        // Calculate the offset for the new vertices
+        let vertex_offset = self.positions.len() as u32;
+
+        // Update indices by adding the vertex offset
         for face in &mut other.indices {
-            face.offset(offset);
+            face.offset(vertex_offset);
         }
+
+        // Continue handling indices
+        self.indices.extend(other.indices);
+    }
+
+    /// Given two MeshConstructs, find the Vec3 that best represents their combined coordinates.
+    fn calculate_transform(&self, other: MeshConstruct) -> Vec3 {
+        //let
+
+        todo!()
     }
 
     /// Takes the various components of a block, along with an index offset, and makes a MeshConstruct.
-    fn from_block(block: &Block, position: ChunkBlockCoordinate, chunk: &Chunk) -> Self {
+    fn from_block(block: &Block, position: ChunkBlockCoordinate, chunk: &Chunk) -> Option<Self> {
         // TODO: for stairs and other blocks, the offset may not be * 8 (the number of vertices)
         let offset = (chunk.block_index(&position) as u32) * 8;
 
-        Self {
+        if block.block_type == BlockType::Air {
+            return None;
+        }
+
+        tracing::info!(
+            "Making MeshConstruct from block: indices: {}, uvs: {} \n",
+            &block
+                .indices(offset)
+                .iter()
+                .map(|ind| ind.count())
+                .sum::<usize>(),
+            &block.uvs().len()
+        );
+
+        Some(Self {
             transform: position,
             positions: block.positions(),
             normals: block.normals(),
             uvs: block.uvs(),
-            indices: block.indicies(offset),
-        }
+            indices: block.indices(offset),
+        })
     }
 
     /// Creates a `Mesh` from `self`.
     fn build(self) -> Mesh {
+        tracing::info!(
+            "Building Mesh from MeshConstruct with following components: indices: {}, uvs: {} \n",
+            &self.indices.iter().map(|ind| ind.count()).sum::<usize>(),
+            &self.uvs.len()
+        );
+
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, self.positions);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, self.normals);

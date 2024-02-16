@@ -1,10 +1,7 @@
 use bevy::{
     prelude::*,
-    render::mesh::Indices,
     window::{CursorGrabMode, PrimaryWindow},
 };
-
-use self::meshing::triangle::{Face, Triangle};
 
 pub mod meshing;
 pub mod skybox;
@@ -30,7 +27,7 @@ impl MacawRendererPlugin {
         let mut window = window_query.single_mut();
         window.cursor.grab_mode = CursorGrabMode::Locked;
 
-        let world = crate::world::World::generate();
+        let world = crate::world::World::generate_test_chunk();
 
         fn handle_builder(assets: &Res<AssetServer>, path: &str) -> Handle<Image> {
             assets.load(path.to_owned())
@@ -61,7 +58,7 @@ impl MacawRendererPlugin {
         let _grass_material = material_builder(&mut materials, grass_handle);
 
         for (chunk_location, chunk) in world.chunks().clone() {
-            tracing::debug!("chunk: `{chunk_location:?}`");
+            //tracing::debug!("chunk: `{chunk_location:?}`");
 
             let calculated_meshes = meshing::greedy::meshing(&chunk);
 

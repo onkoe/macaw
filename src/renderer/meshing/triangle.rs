@@ -77,4 +77,9 @@ impl Face {
             self.b.c(),
         ]
     }
+
+    /// Returns the amount of internally-held indices.
+    pub const fn count(&self) -> usize {
+        6 // it'll always be six, as we have two triangles per face and three indices per triangle.
+    }
 }

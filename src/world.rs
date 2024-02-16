@@ -38,7 +38,7 @@ impl World {
         for x in -3..=3 {
             for z in -3..=3 {
                 let coords = GlobalCoordinate::new(x, 0, z);
-                tracing::debug!("generating chunk at {:?}", coords);
+                //tracing::debug!("generating chunk at {:?}", coords);
 
                 chunks.insert(
                     coords,
@@ -75,7 +75,8 @@ impl World {
     pub fn generate_test_chunk() -> World {
         let mut chunks = HashMap::new();
 
-        let mut chunk = Chunk::new_filled(Block::new(BlockType::Stone, 0), coordinates::ORIGIN);
+        let mut chunk =
+            Chunk::new_filled(Block::new(BlockType::Stone, 0), GlobalCoordinate::ORIGIN);
 
         // set first layer as grass
         for x in 0..16 {
@@ -99,7 +100,7 @@ impl World {
             }
         }
 
-        chunks.insert(coordinates::ORIGIN, chunk);
+        chunks.insert(GlobalCoordinate::ORIGIN, chunk);
 
         World {
             chunks,
