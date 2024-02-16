@@ -72,28 +72,24 @@ impl Player {
                 if keyboard_input.pressed(KeyCode::ControlLeft) {
                     1.0
                 } else {
-                    0.2
+                    0.05
                 }
             }
 
             if keyboard_input.pressed(KeyCode::W) {
                 direction.z -= time.delta_seconds() / get_movement_speed(&keyboard_input);
-                tracing::debug!("w pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::A) {
                 direction.x -= time.delta_seconds() / get_movement_speed(&keyboard_input);
-                tracing::debug!("a pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::S) {
                 direction.z += time.delta_seconds() / get_movement_speed(&keyboard_input);
-                tracing::debug!("s pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::D) {
                 direction.x += time.delta_seconds() / get_movement_speed(&keyboard_input);
-                tracing::debug!("d pressed, position: {}", transform.translation);
             }
 
             if direction != Vec3::ZERO {
@@ -107,17 +103,14 @@ impl Player {
             if keyboard_input.pressed(KeyCode::ShiftLeft) {
                 transform.translation.y -=
                     time.delta_seconds() / (get_movement_speed(&keyboard_input) / 5.0);
-                tracing::debug!("lshift pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.pressed(KeyCode::Space) {
                 transform.translation.y +=
                     time.delta_seconds() / (get_movement_speed(&keyboard_input) / 5.0);
-                tracing::debug!("space pressed, position: {}", transform.translation);
             }
 
             if keyboard_input.just_pressed(KeyCode::Escape) {
-                tracing::info!("Escape pressed. Displaying game menu!");
                 match window.cursor.grab_mode {
                     bevy::window::CursorGrabMode::None => {
                         // unpause
