@@ -18,6 +18,7 @@ pub mod generation;
 pub mod meshing;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct World {
     /// Loaded chunks in the world.
     chunks: HashMap<GlobalCoordinate, Chunk>,
@@ -37,7 +38,7 @@ impl World {
         for x in -3..=3 {
             for z in -3..=3 {
                 let coords = GlobalCoordinate::new(x, 0, z);
-                tracing::debug!("generating chunk at {:?}", coords);
+                //tracing::debug!("generating chunk at {:?}", coords);
 
                 chunks.insert(
                     coords,
@@ -53,10 +54,29 @@ impl World {
         }
     }
 
+    pub fn one_test_block() -> World {
+        let chunk_coordinate = GlobalCoordinate::new(0, 0, 0);
+        let mut chunk = Chunk::new(chunk_coordinate);
+        chunk.set_block(
+            Block::new(BlockType::Grass, 0),
+            ChunkBlockCoordinate::new(0, 0, 0),
+        );
+
+        let mut map = HashMap::new();
+        map.insert(chunk_coordinate, chunk);
+
+        World {
+            chunks: map,
+            _entities: (),
+            spawn_location: (0.0, 0.0, 0.0),
+        }
+    }
+
     pub fn generate_test_chunk() -> World {
         let mut chunks = HashMap::new();
 
-        let mut chunk = Chunk::new_filled(Block::new(BlockType::Stone, 0), coordinates::ORIGIN);
+        let mut chunk =
+            Chunk::new_filled(Block::new(BlockType::Stone, 0), GlobalCoordinate::ORIGIN);
 
         // set first layer as grass
         for x in 0..16 {
@@ -80,7 +100,7 @@ impl World {
             }
         }
 
-        chunks.insert(coordinates::ORIGIN, chunk);
+        chunks.insert(GlobalCoordinate::ORIGIN, chunk);
 
         World {
             chunks,
