@@ -47,7 +47,7 @@ impl Player {
                 GlobalTransform::default(),
             ))
             .insert(Name::new("Player"))
-            .with_children(|parent: &mut ChildBuilder<'_, '_, '_>| {
+            .with_children(|parent: &mut ChildBuilder<'_>| {
                 parent.spawn(Camera3dBundle::default()).insert(PlayerCamera);
             })
             .id();
@@ -56,7 +56,7 @@ impl Player {
     /// Controls the player using application input.
     pub fn player_input_system(
         mut mouse_input: EventReader<MouseMotion>,
-        keyboard_input: Res<Input<KeyCode>>,
+        keyboard_input: Res<ButtonInput<KeyCode>>,
         mut keyboard_query: Query<&mut Transform, With<Player>>,
         mut window_query: Query<&mut Window, With<PrimaryWindow>>,
         time: Res<Time>,
@@ -68,7 +68,7 @@ impl Player {
         for mut transform in keyboard_query.iter_mut() {
             let mut direction = Vec3::ZERO;
 
-            fn get_movement_speed(keyboard_input: &Res<Input<KeyCode>>) -> f32 {
+            fn get_movement_speed(keyboard_input: &Res<ButtonInput<KeyCode>>) -> f32 {
                 if keyboard_input.pressed(KeyCode::ControlLeft) {
                     1.0
                 } else {
@@ -76,19 +76,19 @@ impl Player {
                 }
             }
 
-            if keyboard_input.pressed(KeyCode::W) {
+            if keyboard_input.pressed(KeyCode::KeyW) {
                 direction.z -= time.delta_seconds() / get_movement_speed(&keyboard_input);
             }
 
-            if keyboard_input.pressed(KeyCode::A) {
+            if keyboard_input.pressed(KeyCode::KeyA) {
                 direction.x -= time.delta_seconds() / get_movement_speed(&keyboard_input);
             }
 
-            if keyboard_input.pressed(KeyCode::S) {
+            if keyboard_input.pressed(KeyCode::KeyS) {
                 direction.z += time.delta_seconds() / get_movement_speed(&keyboard_input);
             }
 
-            if keyboard_input.pressed(KeyCode::D) {
+            if keyboard_input.pressed(KeyCode::KeyD) {
                 direction.x += time.delta_seconds() / get_movement_speed(&keyboard_input);
             }
 

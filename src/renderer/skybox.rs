@@ -10,7 +10,7 @@ use crate::player::PlayerCamera;
 pub fn add_skybox(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    query: Query<Entity, Has<PlayerCamera>>,
+    query: Query<Entity, With<PlayerCamera>>,
     mut images: ResMut<Assets<Image>>,
 ) {
     let skybox_handle = asset_server.load::<Image>("skybox/skybox.png");
@@ -29,7 +29,10 @@ pub fn add_skybox(
                     });
                 }
 
-                commands.entity(x).insert(Skybox(skybox_handle.clone()));
+                commands.entity(x).insert(Skybox {
+                    image: skybox_handle.clone(),
+                    brightness: 1000.0, // TODO: need to calculate or whatever
+                });
             }
         }
     }

@@ -1,5 +1,4 @@
-use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
-use bevy_editor_pls::EditorPlugin;
+use bevy::prelude::*;
 
 use crate::util::{built_info::PKG_VERSION, get_pkg_name};
 
@@ -29,7 +28,8 @@ impl Plugin for MacawUiPlugin {
         );
 
         if cfg!(debug_assertions) {
-            app.add_plugins(EditorPlugin::default());
+            // FIXME: use EditorPlugin when updated
+            //app.add_plugins(EditorPlugin::default());
         }
     }
 }
@@ -38,9 +38,7 @@ impl MacawUiPlugin {
     /// Builds the major UI elements.
     fn setup(mut commands: Commands) {
         commands.spawn(Camera2dBundle {
-            camera_2d: Camera2d {
-                clear_color: ClearColorConfig::None,
-            },
+            camera_2d: Camera2d,
             camera: Camera {
                 order: 1,
                 ..Default::default()

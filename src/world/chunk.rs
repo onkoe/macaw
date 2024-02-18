@@ -155,7 +155,6 @@ impl Chunk {
 
     pub fn next_block(
         &self,
-        block: &Block,
         coordinate: &ChunkBlockCoordinate,
         direction: BlockSide,
     ) -> Option<(Block, ChunkBlockCoordinate)> {

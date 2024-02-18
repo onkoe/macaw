@@ -39,6 +39,13 @@ impl MacawLoaderPlugin {
 
         // add our asset list to global resources
         commands.insert_resource(loader_assets);
+
+        // TODO: create some new state
+        // 1. allow game + mods to add blocks, entities, and items to the registry
+        // 2. load textures, sounds, etc. for these things
+        // 3. complete loading process
+        //
+        // THIS _MUST_ BE MULTITHREADED
     }
 
     /// Checks if the loader state should become `LoaderState::Complete`.
@@ -61,11 +68,11 @@ impl MacawLoaderPlugin {
 
 impl Plugin for MacawLoaderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<LoaderState>();
+        app.init_state::<LoaderState>();
         app.add_systems(Startup, MacawLoaderPlugin::load);
         app.add_systems(
             Update,
-            MacawLoaderPlugin::check_progress.run_if(state_exists_and_equals(LoaderState::Loading)),
+            MacawLoaderPlugin::check_progress.run_if(in_state(LoaderState::Loading)),
         );
     }
 }
