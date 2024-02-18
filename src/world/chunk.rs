@@ -66,7 +66,9 @@ impl Chunk {
     /// Fills in blocks in the chunk given fill bounds.
     /// This overwrites existing blocks!
     pub fn fill(&mut self, block: Block, bounds: BoundingBox<ChunkBlockCoordinate>) {
-        todo!()
+        for coord in bounds.all_coordinates() {
+            self.set_block(block.clone(), coord);
+        }
     }
 
     /// Given a local coordinate, this method returns a list of blocks that
