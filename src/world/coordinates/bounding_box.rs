@@ -2,7 +2,11 @@
 //!
 //! Helps define an area in the world of Macaw.
 
+use bevy::math::primitives::Cuboid;
+use std::collections::HashSet;
+
 use super::{ChunkBlockCoordinate, GlobalCoordinate};
+use crate::world::chunk::Chunk;
 
 /// A bounding box around two `Coordinate`s.
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, PartialOrd, Eq, Ord)]
@@ -78,24 +82,27 @@ impl BoundingBox<GlobalCoordinate> {
     ///
     /// bounds.extend(GlobalCoordinate::ORIGIN);
     /// assert_eq!(bounds.bounds(), (low_coord, high_coord));
-
     /// ```
     pub fn extend(&mut self, bound: GlobalCoordinate) {
-        if bound.smallest() < self.smaller.smallest() {
-            // combine the lowest of both coords
-            self.smaller = GlobalCoordinate::new(
-                bound.x.min(self.smaller.x),
-                bound.y.min(self.smaller.y),
-                bound.z.min(self.smaller.z),
-            );
-        } else if bound.largest() > self.larger.largest() {
-            // combine the highest of both coords
-            self.larger = GlobalCoordinate::new(
-                bound.x.max(self.larger.x),
-                bound.y.max(self.larger.y),
-                bound.z.max(self.larger.z),
-            );
-        }
+        self.smaller = GlobalCoordinate::new(
+            self.smaller.x.min(bound.x),
+            self.smaller.y.min(bound.y),
+            self.smaller.z.min(bound.z),
+        );
+        self.larger = GlobalCoordinate::new(
+            self.larger.x.max(bound.x),
+            self.larger.y.max(bound.y),
+            self.larger.z.max(bound.z),
+        );
+    }
+
+    /// Creates a cuboid from self given the amount of blocks within.
+    pub fn as_cuboid(&self) -> Cuboid {
+        Cuboid::new(
+            (self.larger.x - self.smaller.x + 1) as f32,
+            (self.larger.y - self.smaller.y + 1) as f32,
+            (self.larger.z - self.smaller.z + 1) as f32,
+        )
     }
 }
 
@@ -117,20 +124,47 @@ impl BoundingBox<ChunkBlockCoordinate> {
 
     /// ```
     pub fn extend(&mut self, bound: ChunkBlockCoordinate) {
-        if bound.smallest() < self.smaller.smallest() {
-            // combine the lowest of both coords
-            self.smaller = ChunkBlockCoordinate::new(
-                bound.x().min(self.smaller.x()),
-                bound.y().min(self.smaller.y()),
-                bound.z().min(self.smaller.z()),
-            );
-        } else if bound.largest() > self.larger.largest() {
-            // combine the highest of both coords
-            self.larger = ChunkBlockCoordinate::new(
-                bound.x().max(self.larger.x()),
-                bound.y().max(self.larger.y()),
-                bound.z().max(self.larger.z()),
-            );
+        self.smaller = ChunkBlockCoordinate::new(
+            self.smaller.x().min(bound.x()),
+            self.smaller.y().min(bound.y()),
+            self.smaller.z().min(bound.z()),
+        );
+        self.larger = ChunkBlockCoordinate::new(
+            self.larger.x().max(bound.x()),
+            self.larger.y().max(bound.y()),
+            self.larger.z().max(bound.z()),
+        );
+    }
+
+    /// Given a chunk, this method creates a bounding box with global coordinates
+    /// instead of chunk-local ones.
+    pub fn to_global(&self, chunk: &Chunk) -> BoundingBox<GlobalCoordinate> {
+        BoundingBox {
+            smaller: chunk.global_block_coord(self.smaller),
+            larger: chunk.global_block_coord(self.larger),
         }
+    }
+
+    /// Creates a cuboid from self given the amount of blocks within.
+    pub fn as_cuboid(&self) -> Cuboid {
+        Cuboid::new(
+            (self.larger.x() - self.smaller.x()) as f32,
+            (self.larger.y() - self.smaller.y()) as f32,
+            (self.larger.z() - self.smaller.z()) as f32,
+        )
+    }
+
+    pub fn all_coordinates(&self) -> HashSet<ChunkBlockCoordinate> {
+        let mut set = HashSet::new();
+
+        for x in self.smaller.x()..=self.larger.x() {
+            for y in self.smaller.y()..=self.larger.y() {
+                for z in self.smaller.z()..=self.larger.z() {
+                    set.insert(ChunkBlockCoordinate::new(x, y, z));
+                }
+            }
+        }
+
+        set
     }
 }
