@@ -83,4 +83,18 @@ impl Display for GlobalCoordinate {
     }
 }
 
-impl super::Coordinate for GlobalCoordinate {}
+impl super::Coordinate for GlobalCoordinate {
+    type Value = i64;
+
+    fn x(&self) -> Self::Value {
+        self.x
+    }
+
+    fn y(&self) -> Self::Value {
+        self.y
+    }
+
+    fn z(&self) -> Self::Value {
+        self.z
+    }
+}

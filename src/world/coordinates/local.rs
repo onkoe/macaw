@@ -149,4 +149,18 @@ impl Display for ChunkBlockCoordinate {
         ))
     }
 }
-impl super::Coordinate for ChunkBlockCoordinate {}
+impl super::Coordinate for ChunkBlockCoordinate {
+    type Value = u8;
+
+    fn x(&self) -> Self::Value {
+        self.x
+    }
+
+    fn y(&self) -> Self::Value {
+        self.y
+    }
+
+    fn z(&self) -> Self::Value {
+        self.z
+    }
+}
