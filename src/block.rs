@@ -42,7 +42,7 @@ impl Default for BlockType {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum BlockSide {
     PositiveX,
     NegativeX,

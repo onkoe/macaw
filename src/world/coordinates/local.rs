@@ -86,6 +86,17 @@ impl ChunkBlockCoordinate {
         }
     }
 
+    /// Given a BlockSide (+- x/y/z), this method returns that x/y/z of the coordinate.
+    ///
+    /// It ignores the positivity/negativity of the direction.
+    pub fn get(&self, direction: &BlockSide) -> u8 {
+        match direction {
+            BlockSide::PositiveX | BlockSide::NegativeX => self.x,
+            BlockSide::PositiveY | BlockSide::NegativeY => self.y,
+            BlockSide::PositiveZ | BlockSide::NegativeZ => self.z,
+        }
+    }
+
     pub fn to_vec3(&self) -> Vec3 {
         Vec3 {
             x: self.x as f32,
