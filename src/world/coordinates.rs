@@ -1,6 +1,6 @@
-mod bounding_box;
-mod global;
-mod local;
+pub mod bounding_box;
+pub mod global;
+pub mod local;
 
 pub use bounding_box::BoundingBox;
 pub use global::GlobalCoordinate;
