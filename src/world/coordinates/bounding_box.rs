@@ -6,7 +6,7 @@ use bevy::math::primitives::Cuboid;
 use std::collections::HashSet;
 
 use super::{ChunkBlockCoordinate, GlobalCoordinate};
-use crate::world::chunk::Chunk;
+use crate::{block::BlockSide, world::chunk::Chunk};
 
 /// A bounding box around two `Coordinate`s.
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, PartialOrd, Eq, Ord)]
@@ -21,8 +21,9 @@ impl<T: super::Coordinate + Ord + Copy> BoundingBox<T> {
     /// ```
     /// # use macaw::world::coordinates::{BoundingBox, ChunkBlockCoordinate};
     /// let (bound_a, bound_b) = (ChunkBlockCoordinate::new(2, 2, 2), ChunkBlockCoordinate::new(1, 1, 1));
+    /// let bb = BoundingBox::new(bound_a, bound_b);
     ///
-    ///
+    /// assert_eq!(bb.bounds(), (bound_b, bound_a));
     /// ```
     pub fn new(bound_a: T, bound_b: T) -> Self {
         Self {
@@ -99,9 +100,9 @@ impl BoundingBox<GlobalCoordinate> {
     /// Creates a cuboid from self given the amount of blocks within.
     pub fn as_cuboid(&self) -> Cuboid {
         Cuboid::new(
-            (self.larger.x - self.smaller.x + 1) as f32,
-            (self.larger.y - self.smaller.y + 1) as f32,
-            (self.larger.z - self.smaller.z + 1) as f32,
+            ((self.larger.x - self.smaller.x) + 1) as f32,
+            ((self.larger.y - self.smaller.y) + 1) as f32,
+            ((self.larger.z - self.smaller.z) + 1) as f32,
         )
     }
 }
@@ -110,16 +111,16 @@ impl BoundingBox<ChunkBlockCoordinate> {
     /// Extend the bounding box to include a new bound.
     ///
     /// ```
-    /// # use macaw::world::coordinates::{BoundingBox, LocalChunkCoordinate};
+    /// # use macaw::world::coordinates::{BoundingBox, ChunkBlockCoordinate};
     /// #
-    /// let (low_coord, high_coord) = (LocalChunkCoordinate::new(0, -20, 0), LocalChunkCoordinate::new(0, 4, 0));
-    /// let mut bounds = BoundingBox::new_point(LocalChunkCoordinate::ORIGIN);
+    /// let (low_coord, high_coord) = (, ChunkBlockCoordinate::new(0, 4, 0));
+    /// let mut bounds = BoundingBox::new_point(ChunkBlockCoordinate::ORIGIN);
     ///
     /// bounds.extend(low_coord);
     /// bounds.extend(high_coord);
     /// assert_eq!(bounds.bounds(), (low_coord, high_coord));
     ///
-    /// bounds.extend(LocalChunkCoordinate::ORIGIN);
+    /// bounds.extend(ChunkBlockCoordinate::ORIGIN);
     /// assert_eq!(bounds.bounds(), (low_coord, high_coord));
 
     /// ```
@@ -136,13 +137,22 @@ impl BoundingBox<ChunkBlockCoordinate> {
         );
     }
 
+    /// Returns the length of a given side. Ignores signedness of `direction`.
+    pub fn length(&self, direction: &BlockSide) -> u8 {
+        match direction {
+            BlockSide::PositiveX | BlockSide::NegativeX => self.larger.x() - self.smaller.x(),
+            BlockSide::PositiveY | BlockSide::NegativeY => self.larger.y() - self.smaller.y(),
+            BlockSide::PositiveZ | BlockSide::NegativeZ => self.larger.z() - self.smaller.z(),
+        }
+    }
+
     /// Given a chunk, this method creates a bounding box with global coordinates
     /// instead of chunk-local ones.
     pub fn to_global(&self, chunk: &Chunk) -> BoundingBox<GlobalCoordinate> {
-        BoundingBox {
-            smaller: chunk.global_block_coord(self.smaller),
-            larger: chunk.global_block_coord(self.larger),
-        }
+        let bound_1 = chunk.global_block_coord(self.smaller);
+        let bound_2 = chunk.global_block_coord(self.larger);
+
+        BoundingBox::new(bound_1, bound_2)
     }
 
     /// Creates a cuboid from self given the amount of blocks within.
@@ -154,6 +164,7 @@ impl BoundingBox<ChunkBlockCoordinate> {
         )
     }
 
+    /// Returns a set of all coordinates within the box.
     pub fn all_coordinates(&self) -> HashSet<ChunkBlockCoordinate> {
         let mut set = HashSet::new();
 
