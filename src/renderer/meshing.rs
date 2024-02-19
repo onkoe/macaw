@@ -1,18 +1,8 @@
-//! the plan:
-//! - create a list of blocks (`Cluster`) for each block type in the chunk
-//!     - clusters store:
-//!         - a `BlockType`
-//!         - a `BoundingBox` representing the area they exist in (two coordinates)
-//!     - this can literally be a method on Chunk. like `pub fn cluster(&self) -> Vec<Cluster>;`
-//!         - `cluster()` should basically do the meshing part for us
-//!     - `Clusters` can easily calculate their positions, normals, uvs, and indices from the
-//!       properties of their held `BlockType` and their size.
-//!         - this part can (and SHOULD) be mathematically proven
-//! - given this list of `Cluster`s, we can easily iterate over them + create their meshes
+//! # Meshing
 //!
-//!
+//! Performs greedy meshing for clusters of blocks found in a chunk.
 
-use std::{collections::HashSet, thread::sleep, time::Duration};
+use std::collections::HashSet;
 
 use bevy::prelude::*;
 
@@ -58,9 +48,9 @@ impl<'a> Cluster<'a> {
 
         let mesh = bb.as_cuboid().mesh();
         let transform = Transform {
-            translation: (self.bounding_box.larger().to_vec3()
+            translation: ((self.bounding_box.larger().to_vec3()
                 + self.bounding_box.smaller().to_vec3())
-                / 2.0,
+                / 2.0),
             ..Default::default()
         };
 
@@ -79,8 +69,6 @@ impl<'a> core::fmt::Debug for Cluster<'a> {
     //
 }
 
-// in another module (file)!
-// this can use the previous neighbor-chasing algo from the first attempt
 impl Chunk {
     // ...
 
@@ -101,8 +89,8 @@ impl Chunk {
         );
 
         // these can change, though only locally
-        let mut starting_block = starting_block.clone();
-        let mut starting_coordinate = *starting_coordinate;
+        let mut selected_block = starting_block.clone();
+        let mut selected_coordinate = *starting_coordinate;
 
         // use positive only; we're starting from the lowest coordinate
         let directions = [
@@ -113,22 +101,49 @@ impl Chunk {
 
         // check in all directions
         for direction in directions {
+            if direction == BlockSide::PositiveZ {
+                completed_blocks.insert(selected_coordinate);
+            }
+
             while let Some((neighbor_block, neighbor_coordinate)) =
-                self.next_block(&starting_coordinate, direction)
+                self.next_block(&selected_coordinate, direction)
             {
-                if starting_block.same_kind_as(&neighbor_block)
+                if selected_block.same_kind_as(&neighbor_block)
                     && completed_blocks.get(&neighbor_coordinate).is_none()
                 {
                     tracing::debug!(
                         "Found neighbor: {neighbor_block:?} at {neighbor_coordinate}..."
                     );
 
-                    cluster.extend(neighbor_coordinate);
-                    completed_blocks.insert(neighbor_coordinate);
-                    completed_blocks.insert(starting_coordinate);
+                    // TODO: optimize by only checking the 'new' blocks
+                    // created by the 'potential' extension
+                    //
+                    // we can also avoid cloning by having a method that
+                    // does logic instead
+                    let is_valid_extension = {
+                        let mut c = cluster.clone();
+                        c.extend(neighbor_coordinate);
+                        c
+                    }
+                    .bounding_box
+                    .all_coordinates()
+                    .iter()
+                    .map(|c| self.block(c))
+                    .all(|b| match b {
+                        Some(block) => block.block_type == cluster.block_type,
+                        None => false,
+                    });
 
-                    starting_block = neighbor_block.clone();
-                    starting_coordinate = neighbor_coordinate;
+                    if is_valid_extension {
+                        cluster.extend(neighbor_coordinate);
+                        completed_blocks.insert(neighbor_coordinate);
+                        completed_blocks.insert(selected_coordinate);
+
+                        selected_block = neighbor_block.clone();
+                        selected_coordinate = neighbor_coordinate;
+                    } else {
+                        break;
+                    }
                 } else {
                     break;
                 }
@@ -139,6 +154,7 @@ impl Chunk {
         for coord in cluster.bounding_box.all_coordinates() {
             completed_blocks.insert(coord);
         }
+        completed_blocks.insert(selected_coordinate);
 
         Some(cluster)
     }
@@ -165,11 +181,19 @@ impl Chunk {
 
         tracing::debug!("Found all these clusters: {clusters:#?} \n \n");
 
-        // let new_clusters: Vec<Cluster>;
+        for c in &clusters {
+            for cc in &clusters {
+                if c != cc && cc.bounding_box.is_point() {
+                    let cc_coords = cc.bounding_box.all_coordinates();
 
-        // for c in clusters {
-        //     clusters.windows(2).filter(|a| a[0] > a[1]);
-        // }
+                    for c_coord in c.bounding_box.all_coordinates() {
+                        if cc_coords.contains(&c_coord) {
+                            tracing::error!("duplicate coordinates in clusters!\n\n Cluster 1: {c:#?}\n\n Cluster 2: {cc:#?}\n\n coordinate: {c_coord}");
+                        }
+                    }
+                }
+            }
+        }
 
         clusters
     }
@@ -204,31 +228,54 @@ pub fn render_clusters(
         commands.spawn(PbrBundle {
             mesh: meshes.add(mesh),
             transform,
-            // material: `get_texture_from_block_type(block_type)`,
-            material: materials.add(StandardMaterial {
-                base_color: Color::RED,
-                base_color_texture: Some(
-                    asset_server.load("/home/barrett/Documents/macaw/assets/stone.png"),
-                ),
-                reflectance: 1.0,
-                metallic: 0.1,
-                ..Default::default()
-            }),
+            material: get_texture_from_block_type(&block_type, &mut materials, &asset_server),
             ..Default::default()
         });
     }
     // render things
 }
 
-/// Attempts to spawn a cluster. If it does, it'll sleep for one second.
-pub fn debug_cluster_rendering<'a>(
-    starting: (Block, ChunkBlockCoordinate),
-    completed_blocks: &mut HashSet<ChunkBlockCoordinate>,
-    chunk: &'a Chunk,
-) -> Option<Cluster<'a>> {
-    if let Some(cluster) = chunk.chase_neighbors(&starting.0, &starting.1, completed_blocks) {
-        sleep(Duration::from_secs(1));
-        return Some(cluster);
+fn get_texture_from_block_type(
+    block_type: &BlockType,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    asset_server: &Res<AssetServer>,
+) -> Handle<StandardMaterial> {
+    fn handle_builder(assets: &Res<AssetServer>, path: &str) -> Handle<Image> {
+        assets.load(path.to_owned())
     }
-    None
+
+    fn material_builder(
+        materials: &mut ResMut<'_, Assets<StandardMaterial>>,
+        image_handle: Handle<Image>,
+    ) -> Handle<StandardMaterial> {
+        materials.add(StandardMaterial {
+            base_color_texture: Some(image_handle),
+            reflectance: 1.0,
+            metallic: 0.0,
+            ..Default::default()
+        })
+    }
+
+    let stone_handle: Handle<Image> = handle_builder(
+        asset_server,
+        "/home/barrett/Documents/macaw/assets/stone.png",
+    );
+    let grass_handle: Handle<Image> = handle_builder(
+        asset_server,
+        "/home/barrett/Documents/macaw/assets/grass.png",
+    );
+    let dirt_handle: Handle<Image> = handle_builder(
+        asset_server,
+        "/home/barrett/Documents/macaw/assets/dirt.png",
+    );
+
+    let stone_material = material_builder(materials, stone_handle);
+    let dirt_material = material_builder(materials, dirt_handle);
+    let grass_material = material_builder(materials, grass_handle);
+
+    match block_type {
+        BlockType::Grass => grass_material.clone(),
+        BlockType::Dirt => dirt_material.clone(),
+        _ => stone_material.clone(),
+    }
 }
