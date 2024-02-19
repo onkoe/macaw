@@ -8,7 +8,7 @@ use crate::{
         World,
     },
 };
-use noise::Perlin;
+use noise::Simplex;
 use rand::distributions::{Distribution, Uniform};
 
 use super::GlobalCoordinate;
@@ -75,20 +75,36 @@ impl Generate {
 
 /// Some kind of world generator.
 pub trait Generator {
-    fn generate(seed: u64) -> World;
+    fn generate(&self) -> World;
 }
 
-pub struct DefaultGenerator;
+/// An instance of the default world generator.
+///
+/// Create this before generating a world. Save it alongside the chunks.
+pub struct DefaultGenerator {
+    seed: u32,
+    // TODO: put adjustable values here
+}
 
-impl DefaultGenerator {}
+impl DefaultGenerator {
+    fn biome_map() {
+        // create temperature from noise
+        // create biome layout from temperature + more noise :3
+
+        // forest, plains, taiga (has trees), tundra (no trees), ocean, frozen ocean, lake, frozen lake, river, frozen river,
+        // desert, bog (wetland), beach (pretty!!),
+
+        //let x = noise::
+    }
+}
 
 impl Generator for DefaultGenerator {
-    /// The default world generator.
-    fn generate(seed: u64) -> World {
+    /// Generates the first bits of a world.
+    fn generate(&self) -> World {
         // let chunk_coords: [f64; 2] = [chunk.x as f64, chunk.z as f64];
 
         // step 1: create noise
-        let _noise_generator = Perlin::new(seed as u32);
+        let noise_generator = Simplex::new(self.seed);
 
         // let v = Vec::new();
         // for block in chunk.all_global_block_coordinates() {
