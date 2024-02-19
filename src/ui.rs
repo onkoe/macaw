@@ -3,12 +3,15 @@ use bevy::prelude::*;
 use crate::util::{built_info::PKG_VERSION, get_pkg_name};
 
 mod fps_counter;
+mod main_menu;
 mod player_position;
 
 pub struct MacawUiPlugin;
 
 impl Plugin for MacawUiPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(main_menu::MainMenuPlugin);
+
         app.add_systems(
             Startup,
             (
