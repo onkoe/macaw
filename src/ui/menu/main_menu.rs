@@ -1,26 +1,26 @@
 //! # Main Menu
 //!
-//! The main menu in Macaw.
+//! The title screen menu in Macaw.
 
 use bevy::prelude::*;
 
-#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, States)]
-pub enum MenuState {
-    #[default]
-    Menu,
-    Options,
-    Game,
-}
+use super::MenuState;
+
+#[derive(Event)]
+struct GameMenuCloseEvent;
 
 pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
+        app.add_event::<GameMenuCloseEvent>();
+
         app.add_systems(Startup, MainMenuPlugin::render_menu);
         app.add_systems(
             Update,
-            MainMenuPlugin::perform_menu_actions.run_if(in_state(MenuState::Menu)),
+            MainMenuPlugin::perform_menu_actions.run_if(in_state(MenuState::MainMenu)),
         );
+        app.add_systems(OnExit(MenuState::MainMenu), MainMenuPlugin::close);
         app.init_state::<MenuState>();
     }
 }
@@ -92,6 +92,7 @@ impl MainMenuPlugin {
                     border_color: Color::RED.into(),
                     ..Default::default()
                 })
+                .insert(GenerateButton)
                 .with_children(|p| {
                     p.spawn(TextBundle {
                         style: Style {
@@ -115,7 +116,7 @@ impl MainMenuPlugin {
     fn perform_menu_actions(
         mut interaction_query: Query<
             (&Interaction, &mut BackgroundColor, &mut BorderColor),
-            (Changed<Interaction>, With<Button>),
+            (Changed<Interaction>, With<GenerateButton>),
         >,
         mut state: ResMut<NextState<MenuState>>,
     ) {
@@ -133,5 +134,11 @@ impl MainMenuPlugin {
                 _ => {}
             }
         }
+    }
+
+    /// Closes the main menu.
+    fn close(mut q: Query<&mut Visibility, With<MainMenuRoot>>) {
+        let mut visibility = q.single_mut();
+        *visibility = Visibility::Hidden;
     }
 }
