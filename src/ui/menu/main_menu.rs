@@ -29,7 +29,10 @@ impl Plugin for MainMenuPlugin {
 struct MainMenuRoot;
 
 #[derive(Component)]
-struct GenerateButton;
+struct PlayButton;
+
+#[derive(Component)]
+struct QuitButton;
 
 impl MainMenuPlugin {
     /// Creates the main menu.
@@ -74,39 +77,25 @@ impl MainMenuPlugin {
                     });
                 });
             })
+            // button holding 'div'
             .with_children(|p| {
-                p.spawn(ButtonBundle {
+                p.spawn(NodeBundle {
                     style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
                         display: Display::Flex,
-                        min_width: Val::Percent(5.0),
-                        min_height: Val::Percent(2.0),
-                        align_self: AlignSelf::Center,
-                        justify_self: JustifySelf::Center,
-                        align_content: AlignContent::Center,
+                        flex_direction: FlexDirection::Column,
                         justify_content: JustifyContent::Center,
-                        margin: UiRect::all(Val::Percent(1.0)),
-                        padding: UiRect::axes(Val::Percent(10.0), Val::Percent(2.0)),
                         ..Default::default()
                     },
-                    background_color: Color::BLACK.into(),
-                    border_color: Color::RED.into(),
                     ..Default::default()
                 })
-                .insert(GenerateButton)
                 .with_children(|p| {
-                    p.spawn(TextBundle {
-                        style: Style {
-                            // height: Val::Percent(100.0),
-                            // width: Val::Percent(100.0),
-                            ..Default::default()
-                        },
-                        text: Text {
-                            sections: vec!["Generate World".into()],
-                            justify: JustifyText::Center,
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    });
+                    // play button
+                    spawn_button(p, "Play", PlayButton);
+
+                    // quit button
+                    spawn_button(p, "Quit", QuitButton);
                 });
             });
     }
@@ -114,24 +103,40 @@ impl MainMenuPlugin {
     /// Drives the reactivity of components on the main menu.
     #[allow(clippy::type_complexity)]
     fn perform_menu_actions(
-        mut interaction_query: Query<
-            (&Interaction, &mut BackgroundColor, &mut BorderColor),
-            (Changed<Interaction>, With<GenerateButton>),
+        mut query: Query<
+            (
+                &Interaction,
+                &mut BackgroundColor,
+                &mut BorderColor,
+                Option<&PlayButton>,
+                Option<&QuitButton>,
+            ),
+            Changed<Interaction>,
         >,
         mut state: ResMut<NextState<MenuState>>,
     ) {
-        for (interaction, mut color, mut border_color) in &mut interaction_query {
-            match *interaction {
+        for (interaction, mut color, mut border_color, play_button, quit_button) in &mut query {
+            match interaction {
                 Interaction::Pressed => {
-                    *color = Color::RED.into();
-                    border_color.0 = Color::RED;
-                    state.set(MenuState::Game);
+                    // TODO: this should be on mouse release. NOT on press
+                    if play_button.is_some() {
+                        *color = Color::RED.into();
+                        border_color.0 = Color::RED;
+                        state.set(MenuState::Game);
+                    }
+                    if quit_button.is_some() {
+                        tracing::warn!("oh you wanna leave do you? here you go!");
+                        panic!("critical scary warning panic error corruption scary bad");
+                    }
                 }
                 Interaction::Hovered => {
                     *color = Color::ALICE_BLUE.into();
-                    border_color.0 = Color::WHITE;
+                    border_color.0 = Color::BLUE;
                 }
-                _ => {}
+                Interaction::None => {
+                    *color = Color::BLACK.into();
+                    border_color.0 = Color::BLACK;
+                }
             }
         }
     }
@@ -141,4 +146,36 @@ impl MainMenuPlugin {
         let mut visibility = q.single_mut();
         *visibility = Visibility::Hidden;
     }
+}
+
+/// Spawns a button on the given node.
+fn spawn_button(p: &mut ChildBuilder, text: impl AsRef<str>, ident: impl Component) {
+    p.spawn(ButtonBundle {
+        style: Style {
+            display: Display::Flex,
+            min_width: Val::Percent(5.0),
+            min_height: Val::Percent(2.0),
+            align_self: AlignSelf::Center,
+            justify_self: JustifySelf::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            margin: UiRect::all(Val::Percent(1.0)),
+            padding: UiRect::axes(Val::Percent(8.0), Val::Percent(1.0)),
+            ..Default::default()
+        },
+        background_color: Color::BLACK.into(),
+        border_color: Color::RED.into(),
+        ..Default::default()
+    })
+    .insert(ident)
+    .with_children(|p| {
+        p.spawn(TextBundle::from_section(
+            text.as_ref(),
+            TextStyle {
+                font_size: 20.0,
+                color: Color::WHITE,
+                ..Default::default()
+            },
+        ));
+    });
 }
