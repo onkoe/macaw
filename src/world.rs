@@ -19,7 +19,7 @@ pub mod meshing;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct World {
+pub struct MacawWorld {
     /// Loaded chunks in the world.
     chunks: HashMap<GlobalCoordinate, Chunk>,
     /// Loaded entities.
@@ -28,9 +28,18 @@ pub struct World {
     spawn_location: (f32, f32, f32),
 }
 
-impl World {
+impl MacawWorld {
+    /// Creates a new, empty world.
+    pub fn new() -> Self {
+        Self {
+            chunks: HashMap::new(),
+            _entities: (),
+            spawn_location: (0.0, 128.0, 0.0),
+        }
+    }
+
     /// Creates the damn world. I'm like god up in here
-    pub fn generate() -> World {
+    pub fn generate() -> MacawWorld {
         // create 8 chunks at y = 0 and fill them with cobblestone
 
         let mut chunks = HashMap::new();
@@ -47,14 +56,14 @@ impl World {
             }
         }
 
-        World {
+        MacawWorld {
             chunks,
             _entities: (),
             spawn_location: (0.0, 18.0, 0.0),
         }
     }
 
-    pub fn one_test_block() -> World {
+    pub fn one_test_block() -> MacawWorld {
         let chunk_coordinate = GlobalCoordinate::new(0, 0, 0);
         let mut chunk = Chunk::new(chunk_coordinate);
         chunk.set_block(
@@ -65,14 +74,14 @@ impl World {
         let mut map = HashMap::new();
         map.insert(chunk_coordinate, chunk);
 
-        World {
+        MacawWorld {
             chunks: map,
             _entities: (),
             spawn_location: (0.0, 0.0, 0.0),
         }
     }
 
-    pub fn generate_test_chunk() -> World {
+    pub fn generate_test_chunk() -> MacawWorld {
         let mut chunks = HashMap::new();
 
         let mut chunk =
@@ -102,7 +111,7 @@ impl World {
 
         chunks.insert(GlobalCoordinate::ORIGIN, chunk);
 
-        World {
+        MacawWorld {
             chunks,
             _entities: (),
             spawn_location: (0.0, 18.0, 0.0),
@@ -139,9 +148,9 @@ impl World {
     /// located in.
     ///
     /// ```
-    /// # use macaw::{block::Block, world::{chunk::Chunk, coordinates::GlobalCoordinate, World}};
+    /// # use macaw::{block::Block, world::{chunk::Chunk, coordinates::GlobalCoordinate, MacawWorld}};
     /// #
-    /// let mut world = World::generate();
+    /// let mut world = MacawWorld::generate();
     /// let chunk = world.chunk_from_block_coords(GlobalCoordinate::new(0, 0, 0)).unwrap();
     ///
     /// assert_eq!(chunk.coords(), GlobalCoordinate::new(0, 0, 0));
@@ -176,10 +185,6 @@ impl World {
         for (block_side, block) in adjacent_blocks {
             if let Some(ref b) = block {
                 if b.is_transparent() {
-                    tracing::warn!(
-                        "pushed block side {block_side:#?} with block: {:#?}",
-                        &block
-                    );
                     v.push(block_side);
                 }
             } else {
@@ -220,9 +225,9 @@ impl World {
 mod tests {
     #[test]
     fn chunk_from_block_coords() -> anyhow::Result<()> {
-        use crate::world::{coordinates::GlobalCoordinate, World};
+        use crate::world::{coordinates::GlobalCoordinate, MacawWorld};
 
-        let mut world = World::generate();
+        let mut world = MacawWorld::generate();
         let chunk = world
             .chunk_from_block_coords(GlobalCoordinate::new(47, 16, 15))
             .unwrap();
