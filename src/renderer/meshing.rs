@@ -208,7 +208,7 @@ impl Chunk {
 pub fn render_clusters(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    world: crate::world::World,
+    world: crate::world::MacawWorld,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {

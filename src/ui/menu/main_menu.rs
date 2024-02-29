@@ -124,6 +124,8 @@ impl MainMenuPlugin {
                         border_color.0 = Color::RED;
                         state.set(MenuState::Game);
                     }
+
+                    // brutally die when asked by a user
                     if quit_button.is_some() {
                         tracing::warn!("oh you wanna leave do you? here you go!");
                         panic!("critical scary warning panic error corruption scary bad");
