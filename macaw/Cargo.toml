@@ -1,5 +1,6 @@
 [package]
 name = "macaw"
+description = "The playable part of Macaw, a voxel game that's like Beta 1.7.3."
 version = "0.1.0"
 edition = "2021"
 

@@ -1,2 +1,16 @@
 [workspace]
 members = ["macaw"]
+
+[workspace.package]
+version = "0.1.0"
+license = "MIT"
+license-file = "LICENSE"
+authors = ["Barrett Ray <contact@barretts.club>"]
+edition = "2021"
+repository = "https://github.com/onkoe/macaw"
+homepage = "https://github.com/onkoe/macaw"
+documentation = "https://github.com/onkoe/macaw"
+readme = "README.md"
+keywords = ["game", "voxel", "minecraft", "bevy"]
+categories = ["game-engines", "game-development", "graphics", "rendering"]
+description = "A voxel game aiming to target functionality matching that of Minecraft b1.7.3."

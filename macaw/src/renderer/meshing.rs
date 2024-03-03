@@ -8,6 +8,7 @@ use bevy::prelude::*;
 
 use crate::{
     block::{Block, BlockSide, BlockType},
+    util::get_file,
     world::{
         chunk::Chunk,
         coordinates::{BoundingBox, ChunkBlockCoordinate},
@@ -256,18 +257,9 @@ fn get_texture_from_block_type(
         })
     }
 
-    let stone_handle: Handle<Image> = handle_builder(
-        asset_server,
-        "/home/barrett/Documents/macaw/assets/stone.png",
-    );
-    let grass_handle: Handle<Image> = handle_builder(
-        asset_server,
-        "/home/barrett/Documents/macaw/assets/grass.png",
-    );
-    let dirt_handle: Handle<Image> = handle_builder(
-        asset_server,
-        "/home/barrett/Documents/macaw/assets/dirt.png",
-    );
+    let stone_handle: Handle<Image> = handle_builder(asset_server, &get_file("stone.png"));
+    let grass_handle: Handle<Image> = handle_builder(asset_server, &get_file("grass.png"));
+    let dirt_handle: Handle<Image> = handle_builder(asset_server, &get_file("dirt.png"));
 
     let stone_material = material_builder(materials, stone_handle);
     let dirt_material = material_builder(materials, dirt_handle);
