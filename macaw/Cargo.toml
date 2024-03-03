@@ -1,0 +1,33 @@
+[package]
+name = "macaw"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+built = "0.7.1"
+
+[dependencies]
+anyhow = "~1.0.79"
+# bevy_editor_pls = "0.7.0" # FIXME: put back when updated
+built = "0.7.1"
+libnoise = { version = "1.1" }
+rand = "0.8.5"
+thiserror = "1.0.57"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dependencies.bevy]
+version = "0.13"
+# TODO: remove dynlib if released (lol)
+features = ["dynamic_linking", "bevy_audio"]
+
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
