@@ -7,6 +7,7 @@ pub struct Block {
 }
 
 impl Block {
+    /// Creates a new block.
     pub const fn new(block_type: BlockType, state: u32) -> Self {
         Self { block_type, state }
     }
@@ -25,6 +26,7 @@ impl Block {
     }
 }
 
+/// A type (mostly material) of block.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Ord, Eq, Hash)]
 #[allow(unused)]
 pub enum BlockType {
@@ -45,6 +47,7 @@ impl Default for BlockType {
     }
 }
 
+/// The direction a block, or one of its faces, is facing.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum BlockSide {
     PositiveX,
