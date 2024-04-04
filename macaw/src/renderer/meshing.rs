@@ -184,7 +184,7 @@ impl Chunk {
 
         for c in &clusters {
             for cc in &clusters {
-                if c != cc && cc.bounding_box.is_point() {
+                if c != cc && !c.bounding_box.is_point() && cc.bounding_box.is_point() {
                     let cc_coords = cc.bounding_box.all_coordinates();
 
                     for c_coord in c.bounding_box.all_coordinates() {
