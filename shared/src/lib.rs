@@ -6,4 +6,5 @@
 //! rendering. You need the two sides to agree! 😄
 
 pub mod block;
+pub mod time;
 pub mod world;
