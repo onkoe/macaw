@@ -13,7 +13,7 @@ The workspace contains various crates with differing uses. Let's take a brief lo
 - `macaw`: The main crate for the game. Mostly a pile of rendering, UI, and interactivity code.
 - `shared`: Some collective resources used both by the client (`macaw` crate) and server. This includes behaviors and game concepts (like blocks, coordinates, and chunks).
 - `server_lib`: The library allowing for servers to run. It's a library to allow singleplayer sessions to run their own server locally.
-- `server`: A multiplayer session client. This won't be worked on until later. (TODO)
+- `server`: A multiplayer server session binary. This won't be worked on until later. (TODO)
 
 Additional crates may appear in the workspace in the future, possibly collecting mechanics into separated components.
 
