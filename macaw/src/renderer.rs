@@ -25,7 +25,7 @@ impl MacawRendererPlugin {
         let mut window = window_query.single_mut();
         window.cursor.grab_mode = CursorGrabMode::Locked;
 
-        let world = crate::world::generation::generators::fixed::Generate::testing_world();
+        let world = shared::world::generation::generators::fixed::Generate::testing_world();
 
         meshing::render_clusters(&mut commands, meshes, world, asset_server, materials);
     }
