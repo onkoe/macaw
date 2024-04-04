@@ -1,2 +1,5 @@
 /target
 **/.vscode/settings.json
+
+# damn you macOS
+.DS_Store
