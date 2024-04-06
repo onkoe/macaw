@@ -13,7 +13,7 @@ pub struct GlobalCoordinate {
 }
 
 impl GlobalCoordinate {
-    /// The first location in the world.
+    /// An origin coordinate, at (0, 0, 0).
     pub const ORIGIN: GlobalCoordinate = GlobalCoordinate::new(0, 0, 0);
 
     /// Creates a `GlobalCoordinate`.

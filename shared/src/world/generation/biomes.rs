@@ -9,6 +9,7 @@ use crate::{
     world::{coordinates::GlobalCoordinate, MacawWorld},
 };
 
+#[derive(Clone, Debug)]
 pub struct DefaultBiomeGenerator {
     /// A source of noise to map biomes onto.
     biomes_source: Simplex<2>,
@@ -37,6 +38,12 @@ impl DefaultBiomeGenerator {
     /// at that point.
     pub fn get_temperature(&self, coord: &GlobalCoordinate) -> f32 {
         todo!()
+    }
+}
+
+impl PartialEq for DefaultBiomeGenerator {
+    fn eq(&self, other: &Self) -> bool {
+        self.seed == other.seed
     }
 }
 
@@ -107,7 +114,17 @@ pub enum Biome {
 impl Biome {
     /// Given a world to alter, this method will apply biome-specific transformations.
     pub fn create_features(&self, _world: &mut MacawWorld) {
-        todo!()
+        match self {
+            Biome::Forest => {
+                // add trees
+            }
+            Biome::Plains => {
+                // add grass
+            }
+            _ => {
+                todo!("Implement biome features")
+            }
+        }
     }
 
     /// Returns the layers (`BiomeBlockLayout`) of a biome.

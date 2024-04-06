@@ -11,6 +11,7 @@ use crate::{
     world::{
         chunk::{Chunk, CHUNK_LENGTH},
         coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
+        loader::WorldLoader,
         MacawWorld,
     },
 };
@@ -18,7 +19,7 @@ use crate::{
 pub struct Generate;
 
 impl Generate {
-    pub fn testing_world() -> MacawWorld {
+    pub async fn testing_world() -> MacawWorld {
         let mut chunks = HashMap::new();
 
         // -----------------------
@@ -66,9 +67,8 @@ impl Generate {
         chunks.insert(tbc_coord, two_block_chunk);
 
         MacawWorld {
-            chunks,
-            _entities: (),
-            ..Default::default()
+            loader: WorldLoader::temp(chunks).await,
+            ..MacawWorld::default().await
         }
     }
 }

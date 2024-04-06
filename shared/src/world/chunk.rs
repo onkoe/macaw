@@ -1,4 +1,9 @@
-use crate::block::{Block, BlockSide, BlockType};
+use std::collections::HashSet;
+
+use crate::{
+    block::{Block, BlockSide, BlockType},
+    mob::traits::Mob,
+};
 
 use super::{coordinates::BoundingBox, GlobalCoordinate};
 use crate::world::coordinates::ChunkBlockCoordinate;
@@ -8,7 +13,10 @@ pub const CHUNK_LENGTH: u8 = 16;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub struct Chunk {
+    /// A list of blocks within this loaded chunk.
     blocks: Vec<Block>,
+    /// The global coordinates of this chunk. This is at 1/16th the scale of
+    /// typical block coordinates.
     coords: GlobalCoordinate,
 }
 
