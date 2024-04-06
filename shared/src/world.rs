@@ -16,6 +16,8 @@ pub mod coordinates;
 pub mod error;
 pub mod generation;
 pub mod meshing;
+pub mod metadata;
+pub mod save;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
 #[derive(Clone, Debug, Default, PartialEq)]
