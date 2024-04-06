@@ -14,6 +14,7 @@ description.workspace = true
 
 [dependencies]
 async-trait = "0.1.79"
+chrono = { version = "0.4.37", features = ["clock"] }
 directories = "5.0.1"
 fraction = "0.15.1"
 libnoise = "1.1.2"
@@ -30,3 +31,6 @@ features = ["dynamic_linking"]
 [dev-dependencies]
 anyhow = "1.0"
 tokio = { version = "1.37.0", features = ["rt-multi-thread", "macros"] }
+
+[build-dependencies]
+built = "0.7.1"

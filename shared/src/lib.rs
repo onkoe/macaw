@@ -7,4 +7,5 @@
 
 pub mod block;
 pub mod time;
+pub mod util;
 pub mod world;

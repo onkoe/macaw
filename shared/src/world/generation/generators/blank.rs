@@ -3,10 +3,16 @@
 //! A module that homes the simplest generator - one that generates literally
 //! nothing!
 
-use crate::world::{Generator, MacawWorld};
+use crate::{
+    util::built_info,
+    world::{metadata::GeneratorId, Generator, MacawWorld},
+};
 use async_trait::async_trait;
 
 pub struct BlankGenerator;
+
+pub const BLANK_GENERATOR_ID: GeneratorId =
+    GeneratorId::new("org", built_info::PKG_NAME, "generator", Some("blank"));
 
 #[async_trait]
 impl Generator for BlankGenerator {
@@ -19,7 +25,8 @@ impl Generator for BlankGenerator {
     }
 
     async fn pre_generate(&mut self, seed: u64) -> MacawWorld {
-        MacawWorld::default().await
+        //MacawWorld::default().await
+        todo!()
     }
 
     async fn generate(
