@@ -1,13 +1,21 @@
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
+
+use bevy::utils::Uuid;
 
 use self::{
     coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
     error::WorldError,
+    generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
+    loader::WorldLoader,
 };
 
 use super::block::Block;
 use crate::{
     block::{BlockSide, BlockType},
+    mob::traits::Mob,
     world::chunk::Chunk,
 };
 
@@ -15,57 +23,35 @@ pub mod chunk;
 pub mod coordinates;
 pub mod error;
 pub mod generation;
+pub mod loader;
 pub mod meshing;
 pub mod metadata;
 pub mod save;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Debug)]
 pub struct MacawWorld {
-    /// Loaded chunks in the world.
-    chunks: HashMap<GlobalCoordinate, Chunk>,
-    /// Loaded entities.
-    _entities: (),
+    /// The unique, user-given name of the world.
+    name: Arc<String>,
+    /// Loaded chunks, etc. in the world.
+    loader: WorldLoader,
+    /// The entities currently inhabiting this world.
+    entities: HashSet<Box<dyn Mob>>,
     /// Spawn location (for players).
-    spawn_location: (f32, f32, f32),
+    spawn_location: GlobalCoordinate,
+    /// The generator used to create the world.
+    generator: GeneratorWrapper,
+    /// A unique seed used during world generation.
+    seed: u64,
 }
 
 impl MacawWorld {
-    /// Creates a new, empty world.
-    pub fn new() -> Self {
-        Self {
-            chunks: HashMap::new(),
-            _entities: (),
-            spawn_location: (0.0, 128.0, 0.0),
-        }
+    /// The name of this world.
+    pub fn name(&self) -> String {
+        self.name.to_string()
     }
 
-    /// Creates the damn world. I'm like god up in here
-    pub fn generate() -> MacawWorld {
-        // create 8 chunks at y = 0 and fill them with cobblestone
-
-        let mut chunks = HashMap::new();
-
-        for x in -3..=3 {
-            for z in -3..=3 {
-                let coords = GlobalCoordinate::new(x, 0, z);
-                //tracing::debug!("generating chunk at {:?}", coords);
-
-                chunks.insert(
-                    coords,
-                    Chunk::new_filled(Block::new(BlockType::Stone, 0), coords),
-                );
-            }
-        }
-
-        MacawWorld {
-            chunks,
-            _entities: (),
-            spawn_location: (0.0, 18.0, 0.0),
-        }
-    }
-
-    pub fn one_test_block() -> MacawWorld {
+    pub async fn one_test_block() -> MacawWorld {
         let chunk_coordinate = GlobalCoordinate::new(0, 0, 0);
         let mut chunk = Chunk::new(chunk_coordinate);
         chunk.set_block(
@@ -77,13 +63,16 @@ impl MacawWorld {
         map.insert(chunk_coordinate, chunk);
 
         MacawWorld {
-            chunks: map,
-            _entities: (),
-            spawn_location: (0.0, 0.0, 0.0),
+            name: Arc::new("one test block".into()),
+            loader: WorldLoader::temp(map).await,
+            entities: HashSet::new(),
+            spawn_location: GlobalCoordinate::ORIGIN,
+            generator: GeneratorWrapper::new(BlankGenerator),
+            seed: 0,
         }
     }
 
-    pub fn generate_test_chunk() -> MacawWorld {
+    pub async fn generate_test_chunk() -> MacawWorld {
         let mut chunks = HashMap::new();
 
         let mut chunk =
@@ -114,18 +103,21 @@ impl MacawWorld {
         chunks.insert(GlobalCoordinate::ORIGIN, chunk);
 
         MacawWorld {
-            chunks,
-            _entities: (),
-            spawn_location: (0.0, 18.0, 0.0),
+            name: Arc::new("Test Chunk".into()),
+            loader: WorldLoader::temp(chunks).await,
+            entities: HashSet::new(),
+            spawn_location: GlobalCoordinate::new(0, 18, 0),
+            generator: GeneratorWrapper::new(BlankGenerator),
+            seed: 0,
         }
     }
 
-    /// When given a coordinate, this method will return a mutable a chunk
+    /// When given a coordinate, this method will return a mutable chunk
     /// if that chunk is currently loaded in the world.
     ///
     /// The `coords` are for a chunk, not a block.
     pub fn chunk(&mut self, coords: GlobalCoordinate) -> Option<&mut Chunk> {
-        self.chunks.get_mut(&coords)
+        self.loader.chunks_mut().get_mut(&coords)
     }
 
     /// Tries to place down a chunk at a given location.
@@ -133,7 +125,7 @@ impl MacawWorld {
     /// This can fail if there's already a chunk there. Try using `set_chunk()` instead.
     pub fn push_chunk(&mut self, chunk: Chunk, coords: GlobalCoordinate) -> Result<(), WorldError> {
         // early return if we already have those coords stored
-        if self.chunks.contains_key(&coords) {
+        if self.loader.chunks_mut().contains_key(&coords) {
             return Err(WorldError::ChunkAlreadyExists(coords));
         }
 
@@ -143,7 +135,7 @@ impl MacawWorld {
 
     /// Puts down a chunk at `coords`. This will overwrite anything currently there - be careful!
     pub fn set_chunk(&mut self, chunk: Chunk, coords: GlobalCoordinate) {
-        self.chunks.insert(coords, chunk);
+        self.loader.chunks_mut().insert(coords, chunk);
     }
 
     /// Given a block's global coordinates, this will find the chunk it's
@@ -169,7 +161,7 @@ impl MacawWorld {
 
     /// Returns a reference to the internal chunks hashmap.
     pub fn chunks(&self) -> &HashMap<GlobalCoordinate, Chunk> {
-        &self.chunks
+        &self.loader.chunks_ref()
     }
 
     /// Given global coordinates, returns a block if there's one present.
@@ -221,15 +213,28 @@ impl MacawWorld {
 
         blocks
     }
+
+    async fn default() -> Self {
+        MacawWorld {
+            name: Arc::new(Uuid::new_v4().to_string()),
+            loader: WorldLoader::temp(HashMap::new()).await,
+            entities: HashSet::new(),
+            spawn_location: GlobalCoordinate::ORIGIN,
+            generator: GeneratorWrapper(Arc::new(BlankGenerator)),
+            seed: 0,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn chunk_from_block_coords() -> anyhow::Result<()> {
-        use crate::world::{coordinates::GlobalCoordinate, MacawWorld};
+    use crate::world::generation::{generators::default::DefaultGenerator, Generator};
 
-        let mut world = MacawWorld::generate();
+    #[tokio::test]
+    async fn chunk_from_block_coords() -> anyhow::Result<()> {
+        use crate::world::coordinates::GlobalCoordinate;
+
+        let mut world = DefaultGenerator::new(0).pre_generate(0).await;
         let chunk = world
             .chunk_from_block_coords(GlobalCoordinate::new(47, 16, 15))
             .unwrap();
