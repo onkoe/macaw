@@ -17,8 +17,8 @@ struct GameTick {
 }
 
 impl GameTick {
-    const TICKS_PER_DAY: u16 = 24_000;
-    const TICKS_PER_SECOND: u8 = 20;
+    pub const TICKS_PER_DAY: u16 = 24_000;
+    pub const TICKS_PER_SECOND: u8 = 20;
 
     /// Creates a new `GameTick` with the given tick and day values.
     pub fn new(id: u16, day: u64) -> Self {
