@@ -1,5 +1,6 @@
 use bevy::{
     prelude::*,
+    tasks::block_on,
     window::{CursorGrabMode, PrimaryWindow},
 };
 
@@ -27,6 +28,12 @@ impl MacawRendererPlugin {
 
         let world = shared::world::generation::generators::fixed::Generate::testing_world();
 
-        meshing::render_clusters(&mut commands, meshes, world, asset_server, materials);
+        meshing::render_clusters(
+            &mut commands,
+            meshes,
+            block_on(world),
+            asset_server,
+            materials,
+        );
     }
 }
