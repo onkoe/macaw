@@ -11,10 +11,8 @@ use async_trait::async_trait;
 
 pub struct BlankGenerator;
 
-impl BlankGenerator {
-    /// Creates a new `BlankGenerator`. Requires nothing and returns the
-    /// unit struct.
-    pub fn new() -> Self {
+impl Default for BlankGenerator {
+    fn default() -> Self {
         Self
     }
 }
