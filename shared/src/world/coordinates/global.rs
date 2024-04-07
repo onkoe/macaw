@@ -1,11 +1,17 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Rem, Sub},
+};
 
 use bevy::math::Vec3;
+use serde::{Deserialize, Serialize};
 
 /// A coordinate found in the world - globally.
 ///
 /// These can represent a block or even a chunk!
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(
+    Clone, Copy, Debug, Default, Hash, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize,
+)]
 pub struct GlobalCoordinate {
     pub x: i64,
     pub y: i64,
@@ -74,6 +80,25 @@ impl GlobalCoordinate {
     {
         compare_to(self.x) || compare_to(self.y) || compare_to(self.z)
     }
+
+    /// If all of the contained coordinates match a given closure's comparison,
+    /// this function will return true.
+    ///
+    /// Usage:
+    ///
+    /// ```
+    /// # use macaw::world::coordinates::GlobalCoordinate;
+    /// #
+    /// let coord = GlobalCoordinate::new(2, 4, 6);
+    ///
+    /// assert!(coord.all(|a| a % 2 == 0 ));
+    /// ```
+    pub fn all<F>(&self, compare_to: F) -> bool
+    where
+        F: Fn(i64) -> bool,
+    {
+        compare_to(self.x) || compare_to(self.y) || compare_to(self.z)
+    }
 }
 
 impl Display for GlobalCoordinate {
@@ -96,5 +121,50 @@ impl super::Coordinate for GlobalCoordinate {
 
     fn z(&self) -> Self::Value {
         self.z
+    }
+}
+
+impl Mul<i64> for GlobalCoordinate {
+    type Output = Self;
+
+    fn mul(self, rhs: i64) -> Self::Output {
+        let (x, y, z) = self.free();
+        Self::new(x * rhs, y * rhs, z * rhs)
+    }
+}
+
+impl Div<i64> for GlobalCoordinate {
+    type Output = Self;
+
+    fn div(self, rhs: i64) -> Self::Output {
+        let (x, y, z) = self.free();
+        Self::new(x / rhs, y / rhs, z / rhs)
+    }
+}
+
+impl Rem<i64> for GlobalCoordinate {
+    type Output = Self;
+
+    fn rem(self, rhs: i64) -> Self::Output {
+        let (x, y, z) = self.free();
+        Self::new(x % rhs, y % rhs, z % rhs)
+    }
+}
+
+impl Add<i64> for GlobalCoordinate {
+    type Output = Self;
+
+    fn add(self, rhs: i64) -> Self::Output {
+        let (x, y, z) = self.free();
+        Self::new(x + rhs, y + rhs, z + rhs)
+    }
+}
+
+impl Sub<i64> for GlobalCoordinate {
+    type Output = Self;
+
+    fn sub(self, rhs: i64) -> Self::Output {
+        let (x, y, z) = self.free();
+        Self::new(x - rhs, y - rhs, z - rhs)
     }
 }
