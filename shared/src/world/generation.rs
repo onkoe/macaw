@@ -5,7 +5,11 @@ use std::sync::Arc;
 pub mod biomes;
 pub mod generators;
 
-const MAX_GEN_HEIGHT: u32 = 256;
+/// The maximum generation height of the typical world.
+///
+/// This isn't supposed to be a hard limit, nor do I plan to have a build
+/// limit!
+pub const MAX_GEN_HEIGHT: u32 = 256;
 
 #[async_trait]
 pub trait Generator {
