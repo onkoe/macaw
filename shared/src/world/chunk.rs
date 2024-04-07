@@ -1,9 +1,6 @@
-use std::collections::HashSet;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    block::{Block, BlockSide, BlockType},
-    mob::traits::Mob,
-};
+use crate::block::{Block, BlockSide, BlockType};
 
 use super::{coordinates::BoundingBox, GlobalCoordinate};
 use crate::world::coordinates::ChunkBlockCoordinate;
@@ -11,7 +8,7 @@ use crate::world::coordinates::ChunkBlockCoordinate;
 /// The height, width, and *length* of all chunks.
 pub const CHUNK_LENGTH: u8 = 16;
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord, Serialize, Deserialize)]
 pub struct Chunk {
     /// A list of blocks within this loaded chunk.
     blocks: Vec<Block>,
