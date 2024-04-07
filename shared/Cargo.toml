@@ -14,13 +14,16 @@ description.workspace = true
 
 [dependencies]
 async-trait = "0.1.79"
+bincode = "1.3.3"
 chrono = { version = "0.4.37", features = ["clock"] }
 directories = "5.0.1"
 fraction = "0.15.1"
 libnoise = "1.1.2"
 rand = "0.8.5"
+serde = { version = "1.0.197", features = ["derive", "rc"] }
 tempfile = "3.10.1"
 thiserror = "1.0.58"
+toml = "0.8.12"
 urlencoding = "2.1.3"
 
 [dependencies.bevy]

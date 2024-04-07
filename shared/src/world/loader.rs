@@ -7,11 +7,13 @@ use std::{
     collections::HashMap,
     env::temp_dir,
     fs::File,
+    io::Write,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use bevy::utils::Uuid;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::world::save;
@@ -77,7 +79,7 @@ impl WorldLoader {
 }
 
 /// A representation of the world's actual save files.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct WorldSave {
     /// The name of the world being saved. Used to find paths.
     name: Arc<String>,
@@ -91,15 +93,15 @@ impl WorldSave {
         let save_path = Self::get_path(world_name.clone()).await?;
 
         // check if the save exists
-        if let Some(save) = Self::try_load(world_name, save_path).await {
-            return Ok(save);
+        if let Some(save) = Self::try_load(world_name.clone(), save_path.clone()).await {
+            Ok(save)
         } else {
             // check if we can create a new save
+            Ok(Self::try_new(world_name, save_path).await?)
         }
-
-        todo!()
     }
 
+    /// Attempts to check if this world save is on disk.
     async fn try_load(world_name: Arc<String>, save_path: Arc<String>) -> Option<Self> {
         let res = Path::new(save_path.as_str()).try_exists();
 
@@ -119,7 +121,8 @@ impl WorldSave {
         }
     }
 
-    async fn attempt_new(
+    /// Attempts to create a new world save on disk.
+    async fn try_new(
         world_name: Arc<String>,
         save_path: Arc<String>,
     ) -> Result<Self, WorldLoadingError> {
@@ -128,17 +131,20 @@ impl WorldSave {
             .map_err(|_| WorldLoadingError::WorldNameTaken)?;
 
         // if we're still here, it worked! let's try to create a world metadata file
-        todo!();
-
-        // let's create the `WorldSave`
-        Ok(Self {
-            name: world_name,
+        let s = Self {
+            name: world_name.clone(),
             save_path: {
                 let mut p = PathBuf::new();
                 p.push(save_path.as_str());
                 p
             },
-        })
+        };
+
+        // write metadata to disk
+        s.write_metadata().await?;
+
+        // let's return the `WorldSave`
+        Ok(s)
     }
 
     /// Gets the path of the save, given the name of the world.
@@ -168,13 +174,31 @@ impl WorldSave {
         }
     }
 
+    /// Writes metadata to disk.
+    pub async fn write_metadata(&self) -> Result<(), WorldLoadingError> {
+        // serialize self to string
+        let s = toml::to_string_pretty(&self)
+            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
+
+        // create a file
+        let mut file = File::create(self.save_path.clone())
+            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
+
+        // write the string'd self to that file
+        file.write_all(s.as_bytes())
+            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
+
+        Ok(())
+    }
+
+    /// The name of the world being saved.
     pub async fn name(&self) -> Arc<String> {
         self.name.to_owned()
     }
 }
 
 /// A world-loading error.
-#[derive(Clone, Copy, Debug, Error, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, Error, PartialEq, PartialOrd, Hash)]
 pub enum WorldLoadingError {
     #[error("This world name is already taken. Please choose another name.")]
     WorldNameTaken,
@@ -184,4 +208,6 @@ pub enum WorldLoadingError {
     WorldNameWackFormatting,
     #[error("Requested world doesn't exist.")]
     WorldDoesntExist,
+    #[error("Error while writing metadata: `{0}`.")]
+    MetadataWriteFailed(String),
 }

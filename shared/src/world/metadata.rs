@@ -12,10 +12,15 @@ use super::generation::generators::blank;
 
 /// Metadata important to maintain a world's consistency.
 /// You should keep these in an `std::sync::Arc` for the most part.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
 pub struct WorldMetadata {
+    /// A unique name for a world.
     name: String,
+    /// A unique seed used during world generation.
     seed: u64,
+    /// A representation of this world's generator.
     generator: GeneratorId,
+    /// Date/time when the world was made. (i am god)
     creation_date: DateTime<chrono::Utc>,
 }
 
@@ -32,6 +37,16 @@ impl WorldMetadata {
             seed,
             generator,
             creation_date,
+        }
+    }
+
+    /// Creates a new `WorldMetadata` where the creation date is now!
+    pub fn new_now(name: String, seed: u64, generator: GeneratorId) -> Self {
+        Self {
+            name,
+            seed,
+            generator,
+            creation_date: chrono::Utc::now(),
         }
     }
 

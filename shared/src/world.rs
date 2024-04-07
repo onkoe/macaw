@@ -8,8 +8,12 @@ use bevy::utils::Uuid;
 use self::{
     coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
     error::WorldError,
-    generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
+    generation::{
+        generators::blank::{self, BlankGenerator},
+        Generator, GeneratorWrapper,
+    },
     loader::WorldLoader,
+    metadata::WorldMetadata,
 };
 
 use super::block::Block;
@@ -32,7 +36,7 @@ pub mod save;
 #[derive(Debug)]
 pub struct MacawWorld {
     /// The unique, user-given name of the world.
-    name: Arc<String>,
+    metadata: Arc<WorldMetadata>,
     /// Loaded chunks, etc. in the world.
     loader: WorldLoader,
     /// The entities currently inhabiting this world.
@@ -41,14 +45,12 @@ pub struct MacawWorld {
     spawn_location: GlobalCoordinate,
     /// The generator used to create the world.
     generator: GeneratorWrapper,
-    /// A unique seed used during world generation.
-    seed: u64,
 }
 
 impl MacawWorld {
     /// The name of this world.
     pub fn name(&self) -> String {
-        self.name.to_string()
+        self.metadata.name().to_string()
     }
 
     pub async fn one_test_block() -> MacawWorld {
@@ -63,12 +65,15 @@ impl MacawWorld {
         map.insert(chunk_coordinate, chunk);
 
         MacawWorld {
-            name: Arc::new("one test block".into()),
+            metadata: Arc::new(WorldMetadata::new_now(
+                "One Block".into(),
+                0,
+                blank::BLANK_GENERATOR_ID,
+            )),
             loader: WorldLoader::temp(map).await,
             entities: HashSet::new(),
             spawn_location: GlobalCoordinate::ORIGIN,
             generator: GeneratorWrapper::new(BlankGenerator),
-            seed: 0,
         }
     }
 
@@ -103,12 +108,15 @@ impl MacawWorld {
         chunks.insert(GlobalCoordinate::ORIGIN, chunk);
 
         MacawWorld {
-            name: Arc::new("Test Chunk".into()),
+            metadata: Arc::new(WorldMetadata::new_now(
+                "Test Chunk".into(),
+                0,
+                blank::BLANK_GENERATOR_ID,
+            )),
             loader: WorldLoader::temp(chunks).await,
             entities: HashSet::new(),
             spawn_location: GlobalCoordinate::new(0, 18, 0),
             generator: GeneratorWrapper::new(BlankGenerator),
-            seed: 0,
         }
     }
 
@@ -216,12 +224,15 @@ impl MacawWorld {
 
     async fn default() -> Self {
         MacawWorld {
-            name: Arc::new(Uuid::new_v4().to_string()),
+            metadata: Arc::new(WorldMetadata::new_now(
+                Uuid::new_v4().to_string(),
+                0,
+                blank::BLANK_GENERATOR_ID,
+            )),
             loader: WorldLoader::temp(HashMap::new()).await,
             entities: HashSet::new(),
             spawn_location: GlobalCoordinate::ORIGIN,
             generator: GeneratorWrapper(Arc::new(BlankGenerator)),
-            seed: 0,
         }
     }
 }

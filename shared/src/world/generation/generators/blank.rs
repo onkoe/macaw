@@ -25,7 +25,7 @@ impl Generator for BlankGenerator {
     }
 
     async fn pre_generate(&mut self, seed: u64) -> MacawWorld {
-        //MacawWorld::default().await
+        // MacawWorld::default().await
         todo!()
     }
 
