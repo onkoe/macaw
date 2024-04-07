@@ -39,6 +39,7 @@ pub enum BlockType {
     Sand,
     Sandstone,
     Ice,
+    Leaves,
 }
 
 impl Default for BlockType {
