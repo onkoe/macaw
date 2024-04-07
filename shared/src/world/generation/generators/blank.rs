@@ -11,8 +11,13 @@ use async_trait::async_trait;
 
 pub struct BlankGenerator;
 
-pub const BLANK_GENERATOR_ID: GeneratorId =
-    GeneratorId::new("org", built_info::PKG_NAME, "generator", Some("blank"));
+impl BlankGenerator {
+    /// Creates a new `BlankGenerator`. Requires nothing and returns the
+    /// unit struct.
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 #[async_trait]
 impl Generator for BlankGenerator {
@@ -22,6 +27,10 @@ impl Generator for BlankGenerator {
 
     fn description(&self) -> &'static str {
         "A world generator that creates blank worlds."
+    }
+
+    fn id(&self) -> GeneratorId {
+        GeneratorId::new("org", built_info::PKG_NAME, "generator", Some("blank"))
     }
 
     async fn pre_generate(&mut self, seed: u64) -> MacawWorld {

@@ -7,12 +7,13 @@ use std::fmt::Display;
 
 use bevy::utils::Uuid;
 use chrono::DateTime;
+use serde::{Deserialize, Serialize};
 
-use super::generation::generators::blank;
+use super::generation::{generators::blank::BlankGenerator, Generator};
 
 /// Metadata important to maintain a world's consistency.
 /// You should keep these in an `std::sync::Arc` for the most part.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct WorldMetadata {
     /// A unique name for a world.
     name: String,
@@ -80,7 +81,7 @@ impl Default for WorldMetadata {
         Self {
             name: Uuid::new_v4().to_string(),
             seed: rand::random(),
-            generator: blank::BLANK_GENERATOR_ID,
+            generator: BlankGenerator.id(),
             creation_date: chrono::DateTime::default(),
         }
     }
@@ -90,26 +91,26 @@ impl Default for WorldMetadata {
 ///
 /// Looks like: `tld.organization.name.subname`, where the `subname` element
 /// is optional.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct GeneratorId {
-    tld: &'static str,
-    organization: &'static str,
-    name: &'static str,
-    subname: Option<&'static str>,
+    tld: String,
+    organization: String,
+    name: String,
+    subname: Option<String>,
 }
 
 impl GeneratorId {
-    pub const fn new(
-        tld: &'static str,
-        organization: &'static str,
-        name: &'static str,
-        subname: Option<&'static str>,
+    pub fn new(
+        tld: impl Into<String>,
+        organization: impl Into<String>,
+        name: impl Into<String>,
+        subname: Option<impl Into<String>>,
     ) -> Self {
         Self {
-            tld,
-            organization,
-            name,
-            subname,
+            tld: tld.into(),
+            organization: organization.into(),
+            name: name.into(),
+            subname: subname.map(|s| s.into()),
         }
     }
 }
@@ -145,13 +146,7 @@ mod tests {
 
     #[test]
     fn generator_name_subname() {
-        let my_generator_id = GeneratorId {
-            tld: "com",
-            organization: "youtube",
-            name: "www",
-            subname: Some("dQw4w9WgXcQ"),
-        };
-
+        let my_generator_id = GeneratorId::new("com", "youtube", "www", Some("dQw4w9WgXcQ"));
         assert_eq!("com.youtube.www.dQw4w9WgXcQ", my_generator_id.to_string());
     }
 }

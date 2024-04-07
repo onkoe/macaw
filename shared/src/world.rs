@@ -8,10 +8,7 @@ use bevy::utils::Uuid;
 use self::{
     coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
     error::WorldError,
-    generation::{
-        generators::blank::{self, BlankGenerator},
-        Generator, GeneratorWrapper,
-    },
+    generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
     loader::WorldLoader,
     metadata::WorldMetadata,
 };
@@ -69,7 +66,7 @@ impl MacawWorld {
             metadata: Arc::new(WorldMetadata::new_now(
                 "One Block".into(),
                 0,
-                blank::BLANK_GENERATOR_ID,
+                BlankGenerator.id(),
             )),
             loader: WorldLoader::temp(map).await,
             entities: HashSet::new(),
@@ -112,7 +109,7 @@ impl MacawWorld {
             metadata: Arc::new(WorldMetadata::new_now(
                 "Test Chunk".into(),
                 0,
-                blank::BLANK_GENERATOR_ID,
+                BlankGenerator.id(),
             )),
             loader: WorldLoader::temp(chunks).await,
             entities: HashSet::new(),
@@ -228,7 +225,7 @@ impl MacawWorld {
             metadata: Arc::new(WorldMetadata::new_now(
                 Uuid::new_v4().to_string(),
                 0,
-                blank::BLANK_GENERATOR_ID,
+                BlankGenerator.id(),
             )),
             loader: WorldLoader::temp(HashMap::new()).await,
             entities: HashSet::new(),

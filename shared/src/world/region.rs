@@ -40,6 +40,13 @@ impl Region {
         }
     }
 
+    pub fn write_to_disk(&self) -> Result<(), RegionError> {
+        let s = bincode::serialize(&self.chunks)
+            .map_err(|e| RegionError::ChunkSerializationFailed(e.to_string()))?;
+
+        todo!()
+    }
+
     /// Returns a copy of this region's coordinates.
     pub fn coordinates(&self) -> GlobalCoordinate {
         self.coordinates
@@ -105,6 +112,6 @@ pub enum RegionError {
         chunk: GlobalCoordinate,
         region: GlobalCoordinate,
     },
-    #[error("A chunk already exists at location `{0}`.")]
-    ChunkAlreadyExists(GlobalCoordinate),
+    #[error("Failed to serialize chunks to `bincode`: `{0}`")]
+    ChunkSerializationFailed(String),
 }

@@ -5,11 +5,10 @@
 use async_trait::async_trait;
 
 use crate::{
-    block::BlockSide,
+    util::built_info,
     world::{
-        chunk::Chunk,
-        coordinates::GlobalCoordinate,
         generation::{biomes::DefaultBiomeGenerator, Generator},
+        metadata::GeneratorId,
         MacawWorld,
     },
 };
@@ -52,6 +51,10 @@ impl Generator for DefaultGenerator {
 
     fn description(&self) -> &'static str {
         "Macaw's default world generator. Creates a normal, mellow world."
+    }
+
+    fn id(&self) -> GeneratorId {
+        GeneratorId::new("org", built_info::PKG_NAME, "generator", Some("default"))
     }
 
     async fn pre_generate(&mut self, _seed: u64) -> MacawWorld {

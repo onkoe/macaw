@@ -1,4 +1,4 @@
-use super::{coordinates::ChunkBlockCoordinate, MacawWorld};
+use super::{coordinates::ChunkBlockCoordinate, metadata::GeneratorId, MacawWorld};
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -18,6 +18,9 @@ pub trait Generator {
 
     /// The description of this generator.
     fn description(&self) -> &'static str;
+
+    /// The `GeneratorId` of this generator.
+    fn id(&self) -> GeneratorId;
 
     /// Creates a new MacawWorld and returns it.
     async fn pre_generate(&mut self, seed: u64) -> MacawWorld;
