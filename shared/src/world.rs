@@ -30,6 +30,7 @@ pub mod generation;
 pub mod loader;
 pub mod meshing;
 pub mod metadata;
+pub mod region;
 pub mod save;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
