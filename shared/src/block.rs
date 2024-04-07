@@ -1,6 +1,9 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Component, Debug, Default, PartialEq, PartialOrd, Ord, Eq, Hash)]
+#[derive(
+    Clone, Component, Debug, Default, PartialEq, PartialOrd, Ord, Eq, Hash, Serialize, Deserialize,
+)]
 pub struct Block {
     pub block_type: BlockType,
     pub state: u32, // TODO
@@ -27,7 +30,7 @@ impl Block {
 }
 
 /// A type (mostly material) of block.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Ord, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Ord, Eq, Hash, Serialize, Deserialize)]
 #[allow(unused)]
 pub enum BlockType {
     Air,
