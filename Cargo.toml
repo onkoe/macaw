@@ -3,7 +3,7 @@ members = ["macaw", "server", "server_lib", "shared"]
 resolver = "2"
 
 [workspace.dependencies.bevy]
-version = "0.13"
+version = "0.13.2"
 # TODO: remove dynlib if released (lol)
 features = ["dynamic_linking", "bevy_audio"]
 
