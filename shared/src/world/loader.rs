@@ -2,29 +2,19 @@
 //!
 //! A module that saves/loads the world on disk.
 
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    env::temp_dir,
-    fs::File,
-    io::Write,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
-use bevy::utils::Uuid;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::world::save;
+use crate::world::metadata::WorldMetadata;
 
-use super::{chunk::Chunk, coordinates::GlobalCoordinate};
+use super::{chunk::Chunk, coordinates::GlobalCoordinate, region::RegionError, save::WorldSave};
 
 /// Manages the world's operations to/from disk.
 #[derive(Debug)]
 pub struct WorldLoader {
     /// The name of the loaded world.
-    name: Arc<String>,
+    metadata: Arc<WorldMetadata>,
     /// All currently-loaded chunks in the world.
     loaded: HashMap<GlobalCoordinate, Chunk>,
     /// The file the world is being saved into.
@@ -32,13 +22,13 @@ pub struct WorldLoader {
 }
 
 impl WorldLoader {
-    pub async fn new(world_name: String) -> Result<Self, WorldLoadingError> {
+    pub async fn new(world_metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
         // attempt to create a new save
 
         Self {
-            name: Arc::new(world_name.clone()),
+            metadata: world_metadata.clone(),
             loaded: HashMap::new(),
-            save: WorldSave::new(Arc::new(world_name)).await?,
+            save: WorldSave::new(world_metadata).await?,
         };
 
         todo!()
@@ -49,7 +39,7 @@ impl WorldLoader {
         let save = WorldSave::temp().await;
 
         Self {
-            name: save.name().await,
+            metadata: save.metadata().await,
             loaded: chunks,
             save,
         }
@@ -78,125 +68,6 @@ impl WorldLoader {
     }
 }
 
-/// A representation of the world's actual save files.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct WorldSave {
-    /// The name of the world being saved. Used to find paths.
-    name: Arc<String>,
-    /// The location at which all this world's data is saved.
-    save_path: PathBuf,
-}
-
-impl WorldSave {
-    /// Loads an existing save, if it exists, or attempts to create a new save.
-    pub async fn new(world_name: Arc<String>) -> Result<Self, WorldLoadingError> {
-        let save_path = Self::get_path(world_name.clone()).await?;
-
-        // check if the save exists
-        if let Some(save) = Self::try_load(world_name.clone(), save_path.clone()).await {
-            Ok(save)
-        } else {
-            // check if we can create a new save
-            Ok(Self::try_new(world_name, save_path).await?)
-        }
-    }
-
-    /// Attempts to check if this world save is on disk.
-    async fn try_load(world_name: Arc<String>, save_path: Arc<String>) -> Option<Self> {
-        let res = Path::new(save_path.as_str()).try_exists();
-
-        if let Ok(true) = res {
-            // return a Self
-            Some(Self {
-                name: world_name,
-                save_path: {
-                    let mut p = PathBuf::new();
-                    p.push(save_path.as_str());
-                    p
-                },
-            })
-        } else {
-            // return nothing lol
-            None
-        }
-    }
-
-    /// Attempts to create a new world save on disk.
-    async fn try_new(
-        world_name: Arc<String>,
-        save_path: Arc<String>,
-    ) -> Result<Self, WorldLoadingError> {
-        // attempt to create world folder
-        std::fs::create_dir(Path::new(save_path.as_str()))
-            .map_err(|_| WorldLoadingError::WorldNameTaken)?;
-
-        // if we're still here, it worked! let's try to create a world metadata file
-        let s = Self {
-            name: world_name.clone(),
-            save_path: {
-                let mut p = PathBuf::new();
-                p.push(save_path.as_str());
-                p
-            },
-        };
-
-        // write metadata to disk
-        s.write_metadata().await?;
-
-        // let's return the `WorldSave`
-        Ok(s)
-    }
-
-    /// Gets the path of the save, given the name of the world.
-    async fn get_path(world_name: Arc<String>) -> Result<Arc<String>, WorldLoadingError> {
-        let saves_folder =
-            save::get_saves_path().map_err(|_| WorldLoadingError::NoSaveDirectory)?;
-
-        let save = format!(
-            "{}/{}",
-            saves_folder
-                .to_str()
-                .ok_or(WorldLoadingError::WorldNameWackFormatting)?,
-            world_name
-        );
-
-        // urlencoded to discourage nonsense :3
-        let save_folder_path = urlencoding::encode(&save).to_string();
-
-        Ok(Arc::new(save_folder_path))
-    }
-
-    /// Creates a temporary world save that won't stick around.
-    pub async fn temp() -> Self {
-        Self {
-            name: Arc::new(Uuid::new_v4().to_string()),
-            save_path: temp_dir(),
-        }
-    }
-
-    /// Writes metadata to disk.
-    pub async fn write_metadata(&self) -> Result<(), WorldLoadingError> {
-        // serialize self to string
-        let s = toml::to_string_pretty(&self)
-            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
-
-        // create a file
-        let mut file = File::create(self.save_path.clone())
-            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
-
-        // write the string'd self to that file
-        file.write_all(s.as_bytes())
-            .map_err(|e| WorldLoadingError::MetadataWriteFailed(e.to_string()))?;
-
-        Ok(())
-    }
-
-    /// The name of the world being saved.
-    pub async fn name(&self) -> Arc<String> {
-        self.name.to_owned()
-    }
-}
-
 /// A world-loading error.
 #[derive(Clone, Debug, Error, PartialEq, PartialOrd, Hash)]
 pub enum WorldLoadingError {
@@ -210,4 +81,10 @@ pub enum WorldLoadingError {
     WorldDoesntExist,
     #[error("Error while writing metadata: `{0}`.")]
     MetadataWriteFailed(String),
+    #[error("Couldn't write chunks to `bincode`: `{0}`")]
+    ChunkSerializationFailed(String),
+    #[error("Failed to write chunks to region: `{0}`.")]
+    RegionWriteFailed(#[from] RegionError),
+    #[error("World write failed: `{0}`.")]
+    WorldWriteFailed(String),
 }
