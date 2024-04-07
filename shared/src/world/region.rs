@@ -3,15 +3,13 @@
 //! A collection of chunks in a 32x32x32 area. Inspired by [the wonderful `McRegion`
 //! format](https://tinyurl.com/mu3bfpkk)!
 
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
 
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use super::{
-    chunk::{self, Chunk},
-    coordinates::GlobalCoordinate,
-};
+use super::{chunk::Chunk, coordinates::GlobalCoordinate};
 
 /// A 'region' of 32x32x32 surrounding a collection of chunks.
 /// Used to save these chunks to disk.
@@ -27,6 +25,9 @@ pub struct Region {
     ///
     /// Only chunks within the region's coordinates can be added.
     chunks: HashMap<GlobalCoordinate, Chunk>,
+    /// The date/time when this region was last modified.
+    /// Used to verify the world save.
+    modification_date: DateTime<chrono::Utc>,
 }
 
 impl Region {
@@ -35,6 +36,7 @@ impl Region {
         Self {
             coordinates,
             chunks: HashMap::new(),
+            modification_date: chrono::Utc::now(),
         }
     }
 
@@ -71,6 +73,7 @@ impl Region {
         // better public interface for this...
 
         self.chunks.insert(coordinates, chunk);
+        self.modify();
         Ok(())
     }
 
@@ -85,6 +88,13 @@ impl Region {
             && cc.y <= max.y
             && cc.z >= min.z
             && cc.z <= max.z
+    }
+
+    /// Changes the modification date of this region to the current time.
+    ///
+    /// Use this for *all* region modifications!
+    fn modify(&mut self) {
+        self.modification_date = chrono::Utc::now();
     }
 }
 
