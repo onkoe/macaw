@@ -31,6 +31,8 @@ pub struct Region {
 }
 
 impl Region {
+    pub const CHUNKS_PER_REGION: u8 = 32;
+
     /// Creates a new `Region`.
     pub fn new(coordinates: GlobalCoordinate) -> Self {
         Self {
@@ -57,6 +59,18 @@ impl Region {
     /// hint: This allows you to find regions on disk using chunks... :3
     pub fn find_region_coordinates(chunk_coordinates: GlobalCoordinate) -> GlobalCoordinate {
         chunk_coordinates * 16
+    }
+
+    /// Finds the minimum allowed chunk coordinate in a region, given its
+    /// coordinates.
+    pub fn minimum_chunk(rc: GlobalCoordinate) -> GlobalCoordinate {
+        rc * 32
+    }
+
+    /// Finds the max. chunk coordinate in a region, given its coordinates.
+    pub fn maximum_chunk(rc: GlobalCoordinate) -> GlobalCoordinate {
+        // add minimum to be non-inclusive
+        (rc * 32) + (Region::CHUNKS_PER_REGION - 1).into()
     }
 
     /// Tries to add a new chunk to the internal `chunks` list.

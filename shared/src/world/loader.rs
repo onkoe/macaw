@@ -2,13 +2,11 @@
 //!
 //! A module that saves/loads the world on disk.
 
-use std::{collections::HashMap, sync::Arc};
-
-use thiserror::Error;
-
-use crate::world::metadata::WorldMetadata;
-
 use super::{chunk::Chunk, coordinates::GlobalCoordinate, region::RegionError, save::WorldSave};
+use crate::world::metadata::WorldMetadata;
+use bevy::tasks::futures_lite::future::zip;
+use std::{collections::HashMap, sync::Arc};
+use thiserror::Error;
 
 /// Manages the world's operations to/from disk.
 #[derive(Debug)]
@@ -45,8 +43,19 @@ impl WorldLoader {
         }
     }
 
-    pub async fn push_to_disk(&self) -> Result<(), ()> {
-        todo!()
+    /// Saves the world, like I did when I was born.
+    pub async fn push_to_disk(&self) -> Result<(), WorldLoadingError> {
+        let (metadata, chunks) = zip(
+            self.save.write_metadata(),
+            self.save.write_chunks(&self.loaded),
+        )
+        .await;
+
+        metadata?;
+        chunks?;
+        // TODO: write mobs/other world factors..?
+
+        Ok(())
     }
 
     /// The currently-loaded chunks, as of calling. Be careful!
