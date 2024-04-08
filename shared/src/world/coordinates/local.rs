@@ -23,9 +23,9 @@ impl ChunkBlockCoordinate {
 
     /// A checked constructor for `ChunkBlockCoordinate`.
     pub fn new(x: u8, y: u8, z: u8) -> Self {
-        assert!((0..16).contains(&x));
-        assert!((0..16).contains(&y));
-        assert!((0..16).contains(&z));
+        assert!(x < 16);
+        assert!(y < 16);
+        assert!(z < 16);
 
         Self { x, y, z }
     }

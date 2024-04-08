@@ -11,6 +11,7 @@ use self::{
     generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
     loader::WorldLoader,
     metadata::WorldMetadata,
+    region::Region,
 };
 
 use super::block::Block;
@@ -32,6 +33,7 @@ pub mod save;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
 #[derive(Debug)]
+#[allow(unused)] // TODO: make it used!
 pub struct MacawWorld {
     /// The unique, user-given name of the world.
     metadata: Arc<WorldMetadata>,
@@ -167,7 +169,7 @@ impl MacawWorld {
 
     /// Returns a reference to the internal chunks hashmap.
     pub fn chunks(&self) -> &HashMap<GlobalCoordinate, Chunk> {
-        &self.loader.chunks_ref()
+        self.loader.chunks_ref()
     }
 
     /// Given global coordinates, returns a block if there's one present.

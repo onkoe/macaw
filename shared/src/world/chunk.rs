@@ -97,8 +97,7 @@ impl Chunk {
         blocks
     }
 
-    /// Finds the block next to the specified block in this chunk, should it
-    /// exist.
+    /// Finds the block next to the specified block in this chunk, should it exist.
     pub fn adjacent_block(&self, coord: &ChunkBlockCoordinate, side: BlockSide) -> Option<Block> {
         let (mut x, mut y, mut z) = side.position_offset();
 
@@ -106,7 +105,7 @@ impl Chunk {
         y += coord.y() as i8;
         z += coord.z() as i8;
 
-        if (0..16).contains(&x) && (0..16).contains(&y) && (0..16).contains(&z) {
+        if (0..=15).contains(&x) && (0..=15).contains(&y) && (0..=15).contains(&z) {
             if let Some(block) = self.block(&ChunkBlockCoordinate::new(x as u8, y as u8, z as u8)) {
                 return Some(block);
             }
@@ -135,21 +134,30 @@ impl Chunk {
 
     /// Given a global block coordinate, returns that block.
     pub fn block_from_global_coords(&mut self, coords: GlobalCoordinate) -> Option<&mut Block> {
-        // global to local value
-        let gtl = |coords: i64| -> u8 {
-            coords
-                .rem_euclid(16)
+        // calculate how far from chunk's min the global coord is
+        let relative_pos = |global_coord: i64, chunk_coord: i64| -> Option<u8> {
+            let r: u8 = (global_coord - (chunk_coord * CHUNK_LENGTH as i64))
                 .try_into()
-                .expect("dividing by 16 will never have a remainder above 15")
+                .ok()?;
+            if (0..CHUNK_LENGTH).contains(&r) {
+                Some(r)
+            } else {
+                None
+            }
         };
 
-        let index = self.block_index(&ChunkBlockCoordinate::new(
-            gtl(coords.x),
-            gtl(coords.y),
-            gtl(coords.z),
-        ));
-
-        self.blocks.get_mut(index)
+        // see if new coord is in bounds
+        if let (Some(x), Some(y), Some(z)) = (
+            relative_pos(coords.x, self.coords.x),
+            relative_pos(coords.y, self.coords.y),
+            relative_pos(coords.z, self.coords.z),
+        ) {
+            let local_coord = ChunkBlockCoordinate::new(x, y, z);
+            let index = self.block_index(&local_coord);
+            self.blocks.get_mut(index)
+        } else {
+            None
+        }
     }
 
     /// Given a **local coordinate** (i.e. within 16 x 16 x 16), this method
@@ -172,5 +180,64 @@ impl Chunk {
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        block::Block,
+        world::coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
+    };
+
+    use super::Chunk;
+
+    #[test]
+    fn check_coordinates() {
+        let dirt = Block::new(crate::block::BlockType::Dirt, 0);
+
+        let mut chunk = Chunk::new_filled(dirt.clone(), GlobalCoordinate::new(4, 4, 4));
+
+        chunk.set_block(
+            Block::new(crate::block::BlockType::Ice, 0),
+            ChunkBlockCoordinate::new(0, 0, 0),
+        );
+
+        let sixty_four_g = chunk
+            .block_from_global_coords(GlobalCoordinate::new(64, 64, 64))
+            .cloned();
+
+        let converted = chunk.global_block_coord(ChunkBlockCoordinate::new(0, 0, 0));
+        let cb = chunk.block_from_global_coords(converted).cloned();
+        assert_eq!(cb, sixty_four_g);
+
+        let sixty_four_l = chunk.block(&ChunkBlockCoordinate::new(0, 0, 0));
+
+        // we should get the same block back
+        assert!(sixty_four_g.is_some());
+        assert!(sixty_four_l.is_some());
+        assert_eq!(sixty_four_g, sixty_four_l);
+
+        // check block (15, 15, 15)'s global coords
+        let b = chunk.global_block_coord(ChunkBlockCoordinate::new(15, 15, 15));
+        assert_eq!(b, GlobalCoordinate::new(79, 79, 79));
+
+        // ensure last block is vec's last element
+        let c = chunk.block_index(&ChunkBlockCoordinate::new(15, 15, 15));
+        assert_eq!(c, chunk.blocks().len() - 1);
+
+        // a cbc will panic if out of bounds. let's generate a bunch with `.blocks()`
+        let _ = chunk.blocks();
+
+        // chunks should only contain blocks from [0, 15]. that makes (80, 80, 80) out of bounds!
+        assert!(chunk
+            .block_from_global_coords(GlobalCoordinate::new(80, 80, 80))
+            .is_none());
+
+        // the diagonal chunk over should start there, though!
+        let mut next_chunk = Chunk::new_filled(dirt, GlobalCoordinate::new(5, 5, 5));
+        assert!(next_chunk
+            .block_from_global_coords(GlobalCoordinate::new(80, 80, 80))
+            .is_some());
     }
 }
