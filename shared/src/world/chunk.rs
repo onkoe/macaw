@@ -2,7 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::block::{Block, BlockSide, BlockType};
 
-use super::{coordinates::BoundingBox, GlobalCoordinate};
+use super::{
+    coordinates::BoundingBox,
+    error::WorldError,
+    region::{Region, RegionError},
+    GlobalCoordinate,
+};
 use crate::world::coordinates::ChunkBlockCoordinate;
 
 /// The height, width, and *length* of all chunks.
@@ -37,6 +42,12 @@ impl Chunk {
     /// Returns the coordinates of the Chunk.
     pub fn coords(&self) -> GlobalCoordinate {
         self.coords
+    }
+
+    /// Returns the region that this chunk belongs to.
+    pub async fn region(&self, coords: GlobalCoordinate) -> Result<Region, RegionError> {
+        let rc = (coords / 32) * 32;
+        Region::load(rc)
     }
 
     /// Gives out a list of blocks in the chunk with their coordinates.

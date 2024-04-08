@@ -82,8 +82,6 @@ impl WorldLoader {
 pub enum WorldLoadingError {
     #[error("This world name is already taken. Please choose another name.")]
     WorldNameTaken,
-    #[error("Failed to find `saves/` directory.")]
-    NoSaveDirectory,
     #[error("Given world name isn't valid UTF-8.")]
     WorldNameWackFormatting,
     #[error("Requested world doesn't exist.")]

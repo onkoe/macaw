@@ -85,7 +85,7 @@ impl WorldSave {
     /// Writes chunks to disk.
     pub async fn write_chunks(
         &self,
-        chunks: HashMap<GlobalCoordinate, Chunk>,
+        chunks: &HashMap<GlobalCoordinate, Chunk>,
     ) -> Result<(), WorldLoadingError> {
         todo!("loader.rs: write_chunks()... we should write to a region first. which means we need regions!!")
     }
@@ -148,7 +148,7 @@ impl WorldSave {
 
     /// Gets the path of the save, given the name of the world.
     async fn get_path(world_name: Arc<String>) -> Result<Arc<String>, WorldLoadingError> {
-        let saves_folder = get_saves_path().map_err(|_| WorldLoadingError::NoSaveDirectory)?;
+        let saves_folder = get_saves_path();
 
         let save = format!(
             "{}/{}",
@@ -167,13 +167,13 @@ impl WorldSave {
 
 /// Gets the path where all game saves are kept. This is currently
 /// 'hard-coded', but should later take user configuration during launch.
-pub fn get_saves_path() -> Result<PathBuf, WorldLoadingError> {
+pub fn get_saves_path() -> PathBuf {
     let all_dirs = directories::ProjectDirs::from("", "", GAME_DIRECTORY)
-        .ok_or(WorldLoadingError::NoSaveDirectory)?;
+        .expect("Failed to get `saves/` directory.");
     let dir = all_dirs.config_dir();
 
     let mut path = PathBuf::new();
     path.push(dir);
     path.push(SAVES_DIRECTORY);
-    Ok(path)
+    path
 }

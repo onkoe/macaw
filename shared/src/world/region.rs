@@ -3,11 +3,13 @@
 //! A collection of chunks in a 32x32x32 area. Inspired by [the wonderful `McRegion`
 //! format](https://tinyurl.com/mu3bfpkk)!
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+use crate::world::save::get_saves_path;
 
 use super::{chunk::Chunk, coordinates::GlobalCoordinate};
 
@@ -42,11 +44,51 @@ impl Region {
         }
     }
 
-    pub fn write_to_disk(&self) -> Result<(), RegionError> {
-        let s = bincode::serialize(&self.chunks)
+    /// Loads a region from disk.
+    pub fn load(coordinates: GlobalCoordinate) -> Result<Self, RegionError> {
+        // attempt to find region file
+        let path = Region::path(&coordinates);
+
+        if !path.exists() {
+            return Err(RegionError::RegionReadFailed(
+                path.to_string_lossy().to_string(),
+            ));
+        }
+
+        // read region into a buffer
+        let buf = std::fs::read(path).map_err(|e| RegionError::RegionReadFailed(e.to_string()))?;
+
+        // deserialize that buffer into a region
+        let s = bincode::deserialize(&buf)
+            .map_err(|e| RegionError::RegionWriteFailed(e.to_string()))?;
+
+        Ok(s)
+    }
+
+    /// Writes this region to disk.
+    pub fn write(&self) -> Result<(), RegionError> {
+        // serialize this region into bincode
+        let s = bincode::serialize(&self)
             .map_err(|e| RegionError::ChunkSerializationFailed(e.to_string()))?;
 
-        todo!()
+        // write to disk
+        let path = Region::path(&self.coordinates);
+        std::fs::write(path, s).map_err(|e| RegionError::RegionWriteFailed(e.to_string()))?;
+
+        Ok(())
+    }
+
+    /// This region's filename.
+    pub fn filename(coordinates: &GlobalCoordinate) -> String {
+        let (x, y, z) = coordinates.free();
+        format!("{}_{}_{}.region", x, y, z)
+    }
+
+    /// Gets this region's path on disk. Yes, even if it doesn't exist yet.
+    pub fn path(coordinates: &GlobalCoordinate) -> PathBuf {
+        let mut p = PathBuf::from(get_saves_path());
+        p.push(Self::filename(coordinates));
+        p
     }
 
     /// Returns a copy of this region's coordinates.
@@ -128,4 +170,8 @@ pub enum RegionError {
     },
     #[error("Failed to serialize chunks to `bincode`: `{0}`")]
     ChunkSerializationFailed(String),
+    #[error("Failed to write region to disk: `{0}`")]
+    RegionWriteFailed(String),
+    #[error("Failed to read region from disk: `{0}`")]
+    RegionReadFailed(String),
 }
