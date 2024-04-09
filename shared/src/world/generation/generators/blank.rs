@@ -31,9 +31,8 @@ impl Generator for BlankGenerator {
         GeneratorId::new("org", built_info::PKG_NAME, "generator", Some("blank"))
     }
 
-    async fn pre_generate(&mut self, seed: u64) -> MacawWorld {
-        // MacawWorld::default().await
-        todo!()
+    async fn pre_generate(&mut self, _seed: u64) -> MacawWorld {
+        MacawWorld::default()
     }
 
     async fn generate(

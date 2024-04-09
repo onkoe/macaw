@@ -26,7 +26,7 @@ use super::blank::BlankGenerator;
 pub struct Generate;
 
 impl Generate {
-    pub async fn testing_world() -> MacawWorld {
+    pub fn testing_world() -> MacawWorld {
         let mut chunks = HashMap::new();
 
         // -----------------------

@@ -3,6 +3,7 @@ use bevy::{
     tasks::block_on,
     window::{CursorGrabMode, PrimaryWindow},
 };
+use shared::world::{generation::generators::fixed::Generate, MacawWorld};
 
 pub mod meshing;
 pub mod skybox;
@@ -26,14 +27,20 @@ impl MacawRendererPlugin {
         let mut window = window_query.single_mut();
         window.cursor.grab_mode = CursorGrabMode::Locked;
 
-        let world = shared::world::generation::generators::fixed::Generate::testing_world();
+        let mut world = block_on(Generate::generate_test_chunk());
+        world.save().expect("Failed to save world");
+
+        // load back this world
+        let loaded_world = MacawWorld::load(world.metadata()).unwrap();
 
         meshing::render_clusters(
             &mut commands,
             meshes,
-            block_on(world),
+            &loaded_world,
             asset_server,
             materials,
         );
+
+        world.save().expect("Failed to save world");
     }
 }

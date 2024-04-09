@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
 
 use crate::block::{Block, BlockSide, BlockType};
 
 use super::{
     coordinates::BoundingBox,
-    error::WorldError,
+    metadata::WorldMetadata,
     region::{Region, RegionError},
     GlobalCoordinate,
 };
@@ -44,10 +46,9 @@ impl Chunk {
         self.coords
     }
 
-    /// Returns the region that this chunk belongs to.
-    pub async fn region(&self, coords: GlobalCoordinate) -> Result<Region, RegionError> {
-        let rc = (coords / 32) * 32;
-        Region::load(rc)
+    /// Returns the coordinates of the region that this chunk belongs to.
+    pub fn region(&self, coords: GlobalCoordinate) -> GlobalCoordinate {
+        (coords / 32) * 32
     }
 
     /// Gives out a list of blocks in the chunk with their coordinates.

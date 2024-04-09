@@ -2,15 +2,15 @@
 //!
 //! Performs greedy meshing for clusters of blocks found in a chunk.
 
+use bevy::prelude::*;
 use std::collections::HashSet;
-
-use bevy::{prelude::*, render::render_asset::RenderAsset};
 
 use shared::{
     block::{Block, BlockSide, BlockType},
     world::{
         chunk::Chunk,
         coordinates::{BoundingBox, ChunkBlockCoordinate},
+        MacawWorld,
     },
 };
 
@@ -221,7 +221,7 @@ impl Render for Chunk {
 pub fn render_clusters(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    world: shared::world::MacawWorld,
+    world: &MacawWorld,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {

@@ -2,17 +2,21 @@
 //!
 //! A module that saves/loads the world on disk.
 
-use super::{chunk::Chunk, coordinates::GlobalCoordinate, region::RegionError, save::WorldSave};
+use super::{
+    chunk::Chunk,
+    coordinates::GlobalCoordinate,
+    region::{Region, RegionError},
+    save::WorldSave,
+};
+
 use crate::world::metadata::WorldMetadata;
-use bevy::tasks::futures_lite::future::zip;
+use bevy::tasks::block_on;
 use std::{collections::HashMap, sync::Arc};
 use thiserror::Error;
 
 /// Manages the world's operations to/from disk.
 #[derive(Debug)]
 pub struct WorldLoader {
-    /// The name of the loaded world.
-    metadata: Arc<WorldMetadata>,
     /// All currently-loaded chunks in the world.
     loaded: HashMap<GlobalCoordinate, Chunk>,
     /// The file the world is being saved into.
@@ -20,50 +24,69 @@ pub struct WorldLoader {
 }
 
 impl WorldLoader {
-    pub async fn new(world_metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
-        // attempt to create a new save
-
-        Self {
-            metadata: world_metadata.clone(),
+    /// Creates a new `WorldLoader` given a `WorldMetadata`.
+    pub fn new(world_metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
+        Ok(Self {
             loaded: HashMap::new(),
-            save: WorldSave::new(world_metadata).await?,
+            save: block_on(WorldSave::new(world_metadata))?,
+        })
+    }
+
+    /// Creates a new `WorldLoader` given a `WorldSave` and `WorldMetadata`.
+    pub fn new_with_save(save: WorldSave) -> Self {
+        let _ = Self {
+            save,
+            loaded: HashMap::new(),
         };
 
+        // load from disk
         todo!()
     }
 
-    /// Creates a temporary world that isn't saved.
-    pub async fn temp(chunks: HashMap<GlobalCoordinate, Chunk>) -> Self {
-        let save = WorldSave::temp().await;
-
-        Self {
-            metadata: save.metadata().await,
-            loaded: chunks,
-            save,
-        }
+    /// Loads the world from disk.
+    pub fn load_from_disk(&mut self) -> Result<(), WorldLoadingError> {
+        todo!()
     }
 
     /// Saves the world, like I did when I was born.
     pub async fn push_to_disk(&self) -> Result<(), WorldLoadingError> {
-        let (metadata, chunks) = zip(
-            self.save.write_metadata(),
-            self.save.write_chunks(&self.loaded),
-        )
-        .await;
+        // get all regions
+        let regions = self.regions();
 
-        metadata?;
-        chunks?;
+        // write all to disk
+        self.save.write_chunks(&regions).await?;
+        self.save.write_metadata().await?;
         // TODO: write mobs/other world factors..?
 
         Ok(())
     }
 
-    /// The currently-loaded chunks, as of calling. Be careful!
-    ///
-    /// TODO: having this not be borrowed may cause bugs. Either document
-    /// well or change something!
-    pub(crate) fn chunks(&self) -> HashMap<GlobalCoordinate, Chunk> {
-        self.loaded.clone()
+    /// Gets all regions for these loaded chunks.
+    pub fn regions(&self) -> Vec<Region> {
+        let mut v = HashMap::new();
+
+        for (chunk_coordinates, chunk) in self.loaded.iter() {
+            // add region to hashmap with new chunk if it's not there.
+            // otherwise, just add the chunk to the existing region.
+            let region_coordinates = chunk.region(chunk.coords());
+
+            v.entry(region_coordinates)
+                .or_insert_with(|| {
+                    let mut region = Region::new(region_coordinates, self.save.metadata());
+                    region
+                        .add_chunk(*chunk_coordinates, chunk.clone())
+                        .expect("region contains chunk");
+                    region
+                })
+                .add_chunk(*chunk_coordinates, chunk.clone())
+                .expect("region contains chunk");
+        }
+
+        v.into_values().collect()
+    }
+
+    pub fn get_save(&self) -> Result<WorldSave, WorldLoadingError> {
+        Ok(self.save.clone())
     }
 
     /// The currently-loaded chunks in a mutable form.
@@ -80,8 +103,8 @@ impl WorldLoader {
 /// A world-loading error.
 #[derive(Clone, Debug, Error, PartialEq, PartialOrd, Hash)]
 pub enum WorldLoadingError {
-    #[error("This world name is already taken. Please choose another name.")]
-    WorldNameTaken,
+    #[error("Failed to create a new save path: `{0}`")]
+    SavePathCreationFailure(String),
     #[error("Given world name isn't valid UTF-8.")]
     WorldNameWackFormatting,
     #[error("Requested world doesn't exist.")]

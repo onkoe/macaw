@@ -3,15 +3,15 @@ use std::{
     sync::Arc,
 };
 
-use bevy::utils::Uuid;
+use bevy::{tasks::block_on, utils::Uuid};
 
 use self::{
-    coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
+    coordinates::GlobalCoordinate,
     error::WorldError,
     generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
-    loader::WorldLoader,
+    loader::{WorldLoader, WorldLoadingError},
     metadata::WorldMetadata,
-    region::Region,
+    save::WorldSave,
 };
 
 use super::block::Block;
@@ -47,6 +47,9 @@ impl MacawWorld {
         self.metadata.name().to_string()
     }
 
+    /// The metadata of this world.
+    pub fn metadata(&self) -> Arc<WorldMetadata> {
+        self.metadata.clone()
     }
 
     /// Saves the world to disk.

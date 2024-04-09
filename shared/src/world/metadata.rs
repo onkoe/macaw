@@ -3,13 +3,16 @@
 //! A module containing representations of the various kinds of `MacawWorld`
 //! metadata!
 
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf, sync::Arc};
 
 use bevy::utils::Uuid;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
-use super::generation::{generators::blank::BlankGenerator, Generator};
+use super::{
+    generation::{generators::blank::BlankGenerator, Generator},
+    save::get_saves_path,
+};
 
 /// Metadata important to maintain a world's consistency.
 /// You should keep these in an `std::sync::Arc` for the most part.
@@ -70,13 +73,26 @@ impl WorldMetadata {
     pub fn creation_date(&self) -> &DateTime<chrono::Utc> {
         &self.creation_date
     }
+
+    /// The path to a world's save directory.
+    pub fn save_path(&self) -> Arc<PathBuf> {
+        let saves_folder = get_saves_path();
+
+        let save = format!(
+            "{}/{}",
+            saves_folder.to_string_lossy(),
+            urlencoding::encode(self.name()) // urlencoded to discourage nonsense :3
+        );
+
+        Arc::new(PathBuf::from(save))
+    }
 }
 
 impl Default for WorldMetadata {
     /// Provides the default value for `WorldMetadata`.
     ///
     /// In this case, it gets a random seed, random name, a blank generator,
-    /// and the current time as the creation date.
+    /// a temporary path, and the current time as the creation date.
     fn default() -> Self {
         Self {
             name: Uuid::new_v4().to_string(),

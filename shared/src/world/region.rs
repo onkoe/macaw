@@ -3,20 +3,20 @@
 //! A collection of chunks in a 32x32x32 area. Inspired by [the wonderful `McRegion`
 //! format](https://tinyurl.com/mu3bfpkk)!
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::world::save::get_saves_path;
-
-use super::{chunk::Chunk, coordinates::GlobalCoordinate};
+use super::{chunk::Chunk, coordinates::GlobalCoordinate, metadata::WorldMetadata};
 
 /// A 'region' of 32x32x32 surrounding a collection of chunks.
 /// Used to save these chunks to disk.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Region {
+    /// The world metadata.
+    metadata: Arc<WorldMetadata>,
     /// The _region_ coordinate of this region. That's 32 times larger than
     /// chunks, and (16 * 32) times larger than blocks!
     ///
@@ -36,18 +36,41 @@ impl Region {
     pub const CHUNKS_PER_REGION: u8 = 32;
 
     /// Creates a new `Region`.
-    pub fn new(coordinates: GlobalCoordinate) -> Self {
+    pub fn new(coordinates: GlobalCoordinate, metadata: Arc<WorldMetadata>) -> Self {
         Self {
+            metadata,
             coordinates,
             chunks: HashMap::new(),
             modification_date: chrono::Utc::now(),
         }
     }
 
+    /// Gets a region from disk, if it exists. Otherwise, it'll create a new one,
+    /// write it to disk, and return it.
+    pub fn get(
+        coordinates: GlobalCoordinate,
+        metadata: Arc<WorldMetadata>,
+    ) -> Result<Self, RegionError> {
+        if let Ok(region) = Self::load(coordinates, metadata.clone()) {
+            Ok(region)
+        } else {
+            // let's create one!
+            let region = Self::new(coordinates, metadata);
+            region.write()?;
+            Ok(region)
+        }
+    }
+
     /// Loads a region from disk.
-    pub fn load(coordinates: GlobalCoordinate) -> Result<Self, RegionError> {
+    ///
+    /// This can fail if the region isn't found on disk or is corrupted.
+    /// TODO: handle corruption!
+    pub fn load(
+        coordinates: GlobalCoordinate,
+        world_metadata: Arc<WorldMetadata>,
+    ) -> Result<Self, RegionError> {
         // attempt to find region file
-        let path = Region::path(&coordinates);
+        let path = Region::path_from_coordinates(&coordinates, world_metadata);
 
         if !path.exists() {
             return Err(RegionError::RegionReadFailed(
@@ -56,11 +79,19 @@ impl Region {
         }
 
         // read region into a buffer
-        let buf = std::fs::read(path).map_err(|e| RegionError::RegionReadFailed(e.to_string()))?;
+        let buf = std::fs::read(path.as_ref())
+            .map_err(|e| RegionError::RegionReadFailed(e.to_string()))?;
 
         // deserialize that buffer into a region
-        let s = bincode::deserialize(&buf)
-            .map_err(|e| RegionError::RegionWriteFailed(e.to_string()))?;
+        let s: Region = bincode::deserialize(&buf).map_err(|e| {
+            RegionError::RegionWriteFailed(format!(
+                "failed to deserialize region from bincode: `{}`",
+                e
+            ))
+        })?;
+
+        tracing::warn!("read region from disk: {:?}", &s.chunks.len());
+        tracing::error!("chunk: {:?}", &s.chunks.get(&GlobalCoordinate::ORIGIN));
 
         Ok(s)
     }
@@ -72,8 +103,14 @@ impl Region {
             .map_err(|e| RegionError::ChunkSerializationFailed(e.to_string()))?;
 
         // write to disk
-        let path = Region::path(&self.coordinates);
-        std::fs::write(path, s).map_err(|e| RegionError::RegionWriteFailed(e.to_string()))?;
+        let path = Region::path(self);
+        std::fs::write(path.as_ref(), s).map_err(|e| {
+            RegionError::RegionWriteFailed(format!(
+                "failed to actually write region to disk at `{}`: {}",
+                path.to_string_lossy(),
+                e
+            ))
+        })?;
 
         Ok(())
     }
@@ -84,11 +121,18 @@ impl Region {
         format!("{}_{}_{}.region", x, y, z)
     }
 
-    /// Gets this region's path on disk. Yes, even if it doesn't exist yet.
-    pub fn path(coordinates: &GlobalCoordinate) -> PathBuf {
-        let mut p = PathBuf::from(get_saves_path());
-        p.push(Self::filename(coordinates));
-        p
+    /// Gets this region's path on disk, even if it doesn't exist yet.
+    pub fn path(&self) -> Arc<PathBuf> {
+        Self::path_from_coordinates(&self.coordinates, self.metadata.clone())
+    }
+
+    /// Gets a region's path on disk from its coordinates.
+    pub fn path_from_coordinates(
+        coordinates: &GlobalCoordinate,
+        world_metadata: Arc<WorldMetadata>,
+    ) -> Arc<PathBuf> {
+        let p = world_metadata.save_path().join(Self::filename(coordinates));
+        Arc::new(p)
     }
 
     /// Returns a copy of this region's coordinates.
@@ -118,7 +162,7 @@ impl Region {
     /// Tries to add a new chunk to the internal `chunks` list.
     ///
     /// This can fail if the chunk already exists or is out of bounds for this region.
-    pub async fn add_chunk(
+    pub fn add_chunk(
         &mut self,
         coordinates: GlobalCoordinate,
         chunk: Chunk,
