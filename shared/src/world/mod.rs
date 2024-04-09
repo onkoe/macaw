@@ -53,71 +53,24 @@ impl MacawWorld {
         self.metadata.name().to_string()
     }
 
-    pub async fn one_test_block() -> MacawWorld {
-        let chunk_coordinate = GlobalCoordinate::new(0, 0, 0);
-        let mut chunk = Chunk::new(chunk_coordinate);
-        chunk.set_block(
-            Block::new(BlockType::Grass, 0),
-            ChunkBlockCoordinate::new(0, 0, 0),
-        );
-
-        let mut map = HashMap::new();
-        map.insert(chunk_coordinate, chunk);
-
-        MacawWorld {
-            metadata: Arc::new(WorldMetadata::new_now(
-                "One Block".into(),
-                0,
-                BlankGenerator.id(),
-            )),
-            loader: WorldLoader::temp(map).await,
-            entities: HashSet::new(),
-            spawn_location: GlobalCoordinate::ORIGIN,
-            generator: GeneratorWrapper::new(BlankGenerator),
-        }
     }
 
-    pub async fn generate_test_chunk() -> MacawWorld {
-        let mut chunks = HashMap::new();
+    /// Saves the world to disk.
+    pub fn save(&mut self) -> Result<(), WorldLoadingError> {
+        block_on(self.loader.push_to_disk())
+    }
 
-        let mut chunk =
-            Chunk::new_filled(Block::new(BlockType::Stone, 0), GlobalCoordinate::ORIGIN);
+    /// Loads a world from disk.
+    pub fn load(metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
+        let save = block_on(WorldSave::new(metadata.clone()))?;
+        let loader = WorldLoader::new_with_save(save);
 
-        // set first layer as grass
-        for x in 0..16 {
-            for z in 0..16 {
-                chunk.set_block(
-                    Block::new(BlockType::Grass, 0),
-                    ChunkBlockCoordinate::new(x, 15, z),
-                )
-            }
-        }
-
-        // set 2nd-4th layers as dirt
-        for x in 0..16 {
-            for y in 12..=14 {
-                for z in 0..16 {
-                    chunk.set_block(
-                        Block::new(BlockType::Dirt, 0),
-                        ChunkBlockCoordinate::new(x, y, z),
-                    )
-                }
-            }
-        }
-
-        chunks.insert(GlobalCoordinate::ORIGIN, chunk);
-
-        MacawWorld {
-            metadata: Arc::new(WorldMetadata::new_now(
-                "Test Chunk".into(),
-                0,
-                BlankGenerator.id(),
-            )),
-            loader: WorldLoader::temp(chunks).await,
+        Ok(MacawWorld {
+            metadata,
+            loader,
             entities: HashSet::new(),
-            spawn_location: GlobalCoordinate::new(0, 18, 0),
-            generator: GeneratorWrapper::new(BlankGenerator),
-        }
+            spawn_location: GlobalCoordinate::ORIGIN,
+        })
     }
 
     /// When given a coordinate, this method will return a mutable chunk
