@@ -3,7 +3,7 @@
 //! Helps define an area in the world of Macaw.
 
 use bevy::math::primitives::Cuboid;
-use std::collections::HashSet;
+use std::{collections::HashSet, ops::Div};
 
 use super::{ChunkBlockCoordinate, GlobalCoordinate};
 use crate::{block::BlockSide, world::chunk::Chunk};
@@ -192,5 +192,13 @@ impl BoundingBox<ChunkBlockCoordinate> {
         }
 
         set
+    }
+}
+
+impl Div<i64> for BoundingBox<GlobalCoordinate> {
+    type Output = Self;
+
+    fn div(self, rhs: i64) -> Self::Output {
+        Self::new(self.smaller() / rhs, self.larger() / rhs)
     }
 }
