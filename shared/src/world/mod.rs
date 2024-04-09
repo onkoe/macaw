@@ -15,11 +15,7 @@ use self::{
 };
 
 use super::block::Block;
-use crate::{
-    block::{BlockSide, BlockType},
-    mob::traits::Mob,
-    world::chunk::Chunk,
-};
+use crate::{block::BlockSide, mob::traits::Mob, world::chunk::Chunk};
 
 pub mod chunk;
 pub mod coordinates;
@@ -33,18 +29,16 @@ pub mod save;
 
 /// A representation of a game world. Holds game state and loaded chunks/entities.
 #[derive(Debug)]
-#[allow(unused)] // TODO: make it used!
 pub struct MacawWorld {
     /// The unique, user-given name of the world.
     metadata: Arc<WorldMetadata>,
     /// Loaded chunks, etc. in the world.
+    /// This allows to save and load!
     loader: WorldLoader,
     /// The entities currently inhabiting this world.
     entities: HashSet<Box<dyn Mob>>,
     /// Spawn location (for players).
     spawn_location: GlobalCoordinate,
-    /// The generator used to create the world.
-    generator: GeneratorWrapper,
 }
 
 impl MacawWorld {
@@ -175,17 +169,20 @@ impl MacawWorld {
         blocks
     }
 
-    async fn default() -> Self {
+    fn default() -> Self {
+        let metadata = Arc::new(WorldMetadata::new_now(
+            Uuid::new_v4().to_string(),
+            0,
+            BlankGenerator.id(),
+        ));
+
+        let loader = WorldLoader::new(metadata.clone()).unwrap();
+
         MacawWorld {
-            metadata: Arc::new(WorldMetadata::new_now(
-                Uuid::new_v4().to_string(),
-                0,
-                BlankGenerator.id(),
-            )),
-            loader: WorldLoader::temp(HashMap::new()).await,
+            metadata,
+            loader,
             entities: HashSet::new(),
             spawn_location: GlobalCoordinate::ORIGIN,
-            generator: GeneratorWrapper(Arc::new(BlankGenerator)),
         }
     }
 }
