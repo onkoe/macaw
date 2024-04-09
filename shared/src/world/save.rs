@@ -19,8 +19,11 @@ use bevy::tasks::block_on;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    chunk::Chunk, coordinates::GlobalCoordinate, loader::WorldLoadingError,
-    metadata::WorldMetadata, region::Region,
+    chunk::Chunk,
+    coordinates::GlobalCoordinate,
+    loader::WorldLoadingError,
+    metadata::WorldMetadata,
+    region::{Region, RegionError},
 };
 
 pub const GAME_DIRECTORY: &str = "macaw";
@@ -150,6 +153,33 @@ impl WorldSave {
     /// Gets the path of the save, given the name of the world.
     async fn get_path(world_metadata: Arc<WorldMetadata>) -> Arc<PathBuf> {
         world_metadata.save_path()
+    }
+
+    pub fn load_region(
+        &self,
+        region_coordinate: GlobalCoordinate,
+    ) -> Result<Region, WorldLoadingError> {
+        let region_path = Region::path_from_coordinates(&region_coordinate, self.metadata.clone());
+
+        if !region_path.exists() {
+            return Err(WorldLoadingError::RegionReadFailed(
+                region_path.to_string_lossy().to_string(),
+            ));
+        }
+
+        // read region into a buffer
+        let buf = std::fs::read(region_path.as_ref())
+            .map_err(|e| WorldLoadingError::RegionReadFailed(e.to_string()))?;
+
+        // deserialize that buffer into a region
+        let s: Region = bincode::deserialize(&buf).map_err(|e| {
+            RegionError::RegionReadFailed(format!(
+                "failed to deserialize region from bincode: `{}`",
+                e
+            ))
+        })?;
+
+        Ok(s)
     }
 }
 

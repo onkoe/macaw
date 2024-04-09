@@ -6,7 +6,7 @@ use std::{
 use bevy::{tasks::block_on, utils::Uuid};
 
 use self::{
-    coordinates::GlobalCoordinate,
+    coordinates::{BoundingBox, GlobalCoordinate},
     error::WorldError,
     generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
     loader::{WorldLoader, WorldLoadingError},
@@ -60,7 +60,15 @@ impl MacawWorld {
     /// Loads a world from disk.
     pub fn load(metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
         let save = block_on(WorldSave::new(metadata.clone()))?;
-        let loader = WorldLoader::new_with_save(save);
+
+        // TODO: remove hardcoded bounding box when the player can actually generate things
+        let loader = WorldLoader::new_with_save(
+            save,
+            BoundingBox::new(
+                GlobalCoordinate::new(-16, -16, -16),
+                GlobalCoordinate::new(16, 16, 16),
+            ),
+        )?;
 
         Ok(MacawWorld {
             metadata,

@@ -4,7 +4,10 @@
 
 use super::{
     chunk::Chunk,
-    coordinates::GlobalCoordinate,
+    coordinates::{
+        bounding_box::{self, BoundingBox},
+        GlobalCoordinate,
+    },
     region::{Region, RegionError},
     save::WorldSave,
 };
@@ -33,19 +36,41 @@ impl WorldLoader {
     }
 
     /// Creates a new `WorldLoader` given a `WorldSave` and `WorldMetadata`.
-    pub fn new_with_save(save: WorldSave) -> Self {
-        let _ = Self {
+    pub fn new_with_save(
+        save: WorldSave,
+        bounding_box: BoundingBox<GlobalCoordinate>,
+    ) -> Result<Self, WorldLoadingError> {
+        let mut loader = Self {
             save,
             loaded: HashMap::new(),
         };
 
-        // load from disk
-        todo!()
+        loader.load_from_disk(bounding_box)?;
+        Ok(loader)
     }
 
     /// Loads the world from disk.
-    pub fn load_from_disk(&mut self) -> Result<(), WorldLoadingError> {
-        todo!()
+    ///
+    /// You'll need to provide a bounding box of chunks.
+    pub fn load_from_disk(
+        &mut self,
+        bounding_box: BoundingBox<GlobalCoordinate>,
+    ) -> Result<(), WorldLoadingError> {
+        // find all regions that intersect with the bounding box
+        let region_bb = bounding_box / 32;
+        let regions = region_bb.all_coordinates();
+
+        for region_coordinate in regions {
+            // load the region
+            let region = self.save.load_region(region_coordinate)?;
+
+            // add all chunks in the region to the loaded chunks
+            for (chunk_coordinate, chunk) in region.chunks().clone() {
+                self.loaded.insert(chunk_coordinate, chunk);
+            }
+        }
+
+        Ok(())
     }
 
     /// Saves the world, like I did when I was born.
@@ -115,6 +140,8 @@ pub enum WorldLoadingError {
     ChunkSerializationFailed(String),
     #[error("Failed to write chunks to region: `{0}`.")]
     RegionWriteFailed(#[from] RegionError),
+    #[error("Failed to read region from disk: `{0}`.")]
+    RegionReadFailed(String),
     #[error("World write failed: `{0}`.")]
     WorldWriteFailed(String),
 }

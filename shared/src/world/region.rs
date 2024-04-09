@@ -140,6 +140,10 @@ impl Region {
         self.coordinates
     }
 
+    pub fn chunks(&self) -> &HashMap<GlobalCoordinate, Chunk> {
+        &self.chunks
+    }
+
     /// Given a chunk's coordinates, finds the appropriate region coordinates.
     ///
     /// hint: This allows you to find regions on disk using chunks... :3
