@@ -105,6 +105,21 @@ impl BoundingBox<GlobalCoordinate> {
             ((self.larger.z - self.smaller.z) + 1) as f32,
         )
     }
+
+    /// Returns a set of all coordinates within the box.
+    pub fn all_coordinates(&self) -> HashSet<GlobalCoordinate> {
+        let mut set = HashSet::new();
+
+        for x in self.smaller.x..=self.larger.x {
+            for y in self.smaller.y..=self.larger.y {
+                for z in self.smaller.z..=self.larger.z {
+                    set.insert(GlobalCoordinate::new(x, y, z));
+                }
+            }
+        }
+
+        set
+    }
 }
 
 impl BoundingBox<ChunkBlockCoordinate> {
