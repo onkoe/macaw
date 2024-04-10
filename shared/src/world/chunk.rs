@@ -1,15 +1,8 @@
-use std::sync::Arc;
-
 use serde::{Deserialize, Serialize};
 
 use crate::block::{Block, BlockSide, BlockType};
 
-use super::{
-    coordinates::BoundingBox,
-    metadata::WorldMetadata,
-    region::{Region, RegionError},
-    GlobalCoordinate,
-};
+use super::{coordinates::BoundingBox, GlobalCoordinate};
 use crate::world::coordinates::ChunkBlockCoordinate;
 
 /// The height, width, and *length* of all chunks.
