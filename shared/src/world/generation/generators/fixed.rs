@@ -14,9 +14,9 @@ use crate::{
     world::{
         chunk::{Chunk, CHUNK_LENGTH},
         coordinates::{ChunkBlockCoordinate, GlobalCoordinate},
-        generation::{Generator as _, GeneratorWrapper},
+        generation::Generator as _,
         loader::WorldLoader,
-        metadata::{self, WorldMetadata},
+        metadata::WorldMetadata,
         MacawWorld,
     },
 };
@@ -60,6 +60,7 @@ impl Generate {
         // ----------------------------
         // create two block testing area
         // -----------------------------
+
         let tbc_coord = GlobalCoordinate::new(0, 0, 0);
         let mut two_block_chunk = Chunk::new(tbc_coord);
         two_block_chunk.set_block(
@@ -71,18 +72,20 @@ impl Generate {
             ChunkBlockCoordinate::new(1, 0, 0),
         );
 
-        let metadata = Arc::new(metadata::WorldMetadata::new_now(
-            "Test Chunk".into(),
-            0,
+        chunks.insert(tbc_coord, two_block_chunk);
+
+        let metadata = Arc::new(WorldMetadata::new_now(
+            "aaaasjodhfiashdofhaosihdoifh".into(),
+            983274957293,
             BlankGenerator.id(),
         ));
 
-        let mut loader = WorldLoader::new(metadata).expect("failed to load testing world");
-
-        loader.chunks_mut().insert(tbc_coord, two_block_chunk);
+        let mut loader = WorldLoader::new(metadata.clone()).expect("failed to load testing world");
+        loader.chunks_mut().extend(chunks);
 
         MacawWorld {
             loader,
+            metadata,
             ..MacawWorld::default()
         }
     }
