@@ -2,18 +2,19 @@
 //!
 //! Performs greedy meshing for clusters of blocks found in a chunk.
 
+use bevy::prelude::*;
 use std::collections::HashSet;
 
-use bevy::prelude::*;
-
-use crate::{
+use shared::{
     block::{Block, BlockSide, BlockType},
-    util::get_file,
     world::{
         chunk::Chunk,
         coordinates::{BoundingBox, ChunkBlockCoordinate},
+        MacawWorld,
     },
 };
+
+use crate::util::get_file;
 
 /// A cluster of related blocks.
 #[derive(Clone, Hash, PartialEq, PartialOrd)]
@@ -45,13 +46,13 @@ impl<'a> Cluster<'a> {
     }
 
     pub fn build(self) -> (BlockType, Transform, Mesh) {
+        // adjust the bounding box to be in terms of global coordinates
         let bb = self.bounding_box.to_global(self.chunk);
 
         let mesh = bb.as_cuboid().mesh();
+
         let transform = Transform {
-            translation: ((self.bounding_box.larger().to_vec3()
-                + self.bounding_box.smaller().to_vec3())
-                / 2.0),
+            translation: ((bb.larger().to_vec3() + bb.smaller().to_vec3()) / 2.0),
             ..Default::default()
         };
 
@@ -70,12 +71,23 @@ impl<'a> core::fmt::Debug for Cluster<'a> {
     //
 }
 
-impl Chunk {
+pub trait Render {
+    fn chase_neighbors(
+        &self,
+        starting_block: &Block,
+        starting_coordinate: &ChunkBlockCoordinate,
+        completed_blocks: &mut HashSet<ChunkBlockCoordinate>,
+    ) -> Option<Cluster>;
+
+    fn cluster(&self) -> Vec<Cluster>;
+}
+
+impl Render for Chunk {
     // ...
 
     /// Given a block, this method chases all of its neighbors until there are
     /// none of the same type.
-    pub(crate) fn chase_neighbors(
+    fn chase_neighbors(
         &self,
         starting_block: &Block,
         starting_coordinate: &ChunkBlockCoordinate,
@@ -161,7 +173,7 @@ impl Chunk {
     }
 
     /// Creates a list of the chunk's block `Cluster`s to be rendered.
-    pub fn cluster(&self) -> Vec<Cluster> {
+    fn cluster(&self) -> Vec<Cluster> {
         let mut blocks_to_check = self.blocks();
         let mut completed_blocks = HashSet::new();
         let mut clusters = Vec::new();
@@ -209,7 +221,7 @@ impl Chunk {
 pub fn render_clusters(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    world: crate::world::MacawWorld,
+    world: &MacawWorld,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
