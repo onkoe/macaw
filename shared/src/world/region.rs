@@ -98,12 +98,18 @@ impl Region {
 
     /// Writes this region to disk.
     pub fn write(&self) -> Result<(), RegionError> {
+        tracing::debug!("Writing region at {:?}", self.coordinates());
+
         // serialize this region into bincode
         let s = bincode::serialize(&self)
             .map_err(|e| RegionError::ChunkSerializationFailed(e.to_string()))?;
 
+        tracing::debug!("Serialized region to bincode: {:?}", self.coordinates());
+
         // write to disk
         let path = Region::path(self);
+        tracing::debug!("Writing region to disk: {:?}", &path);
+
         std::fs::write(path.as_ref(), s).map_err(|e| {
             RegionError::RegionWriteFailed(format!(
                 "failed to actually write region to disk at `{}`: {}",
@@ -121,7 +127,7 @@ impl Region {
         format!("{}_{}_{}.region", x, y, z)
     }
 
-    /// Gets this region's path on disk, even if it doesn't exist yet.
+    /// Gets this region's path on disk, even if that path doesn't exist yet.
     pub fn path(&self) -> Arc<PathBuf> {
         Self::path_from_coordinates(&self.coordinates, self.metadata.clone())
     }

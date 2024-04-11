@@ -3,12 +3,12 @@ use std::{
     sync::Arc,
 };
 
-use bevy::{tasks::block_on, utils::Uuid};
+use bevy::utils::Uuid;
 
 use self::{
     coordinates::{BoundingBox, GlobalCoordinate},
     error::WorldError,
-    generation::{generators::blank::BlankGenerator, Generator, GeneratorWrapper},
+    generation::{generators::blank::BlankGenerator, Generator},
     loader::{WorldLoader, WorldLoadingError},
     metadata::WorldMetadata,
     save::WorldSave,
@@ -52,14 +52,18 @@ impl MacawWorld {
         self.metadata.clone()
     }
 
-    /// Saves the world to disk.
+    /// Saves the world, like I did when I was born.
     pub fn save(&mut self) -> Result<(), WorldLoadingError> {
-        block_on(self.loader.push_to_disk())
+        self.metadata.write_to_disk()?;
+        self.loader.write_chunks()?;
+        // TODO: write mobs/other world factors..?
+
+        Ok(())
     }
 
     /// Loads a world from disk.
     pub fn load(metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
-        let save = block_on(WorldSave::new(metadata.clone()))?;
+        let save = WorldSave::new(metadata.clone())?;
 
         // TODO: remove hardcoded bounding box when the player can actually generate things
         let loader = WorldLoader::new_with_save(
@@ -201,12 +205,13 @@ impl MacawWorld {
 #[cfg(test)]
 mod tests {
     use crate::world::generation::{generators::default::DefaultGenerator, Generator};
+    use bevy::tasks::block_on;
 
-    #[tokio::test]
-    async fn chunk_from_block_coords() -> anyhow::Result<()> {
+    #[test]
+    fn chunk_from_block_coords() -> anyhow::Result<()> {
         use crate::world::coordinates::GlobalCoordinate;
 
-        let mut world = DefaultGenerator::new(0).pre_generate(0).await;
+        let mut world = block_on(DefaultGenerator::new(0).pre_generate(0));
         let chunk = world
             .chunk_from_block_coords(GlobalCoordinate::new(47, 16, 15))
             .unwrap();

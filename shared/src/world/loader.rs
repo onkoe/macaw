@@ -4,16 +4,12 @@
 
 use super::{
     chunk::Chunk,
-    coordinates::{
-        bounding_box::{self, BoundingBox},
-        GlobalCoordinate,
-    },
+    coordinates::{bounding_box::BoundingBox, GlobalCoordinate},
     region::{Region, RegionError},
     save::WorldSave,
 };
-
 use crate::world::metadata::WorldMetadata;
-use bevy::tasks::block_on;
+
 use std::{collections::HashMap, sync::Arc};
 use thiserror::Error;
 
@@ -31,7 +27,7 @@ impl WorldLoader {
     pub fn new(world_metadata: Arc<WorldMetadata>) -> Result<Self, WorldLoadingError> {
         Ok(Self {
             loaded: HashMap::new(),
-            save: block_on(WorldSave::new(world_metadata))?,
+            save: WorldSave::new(world_metadata)?,
         })
     }
 
@@ -52,6 +48,7 @@ impl WorldLoader {
     /// Loads the world from disk.
     ///
     /// You'll need to provide a bounding box of chunks.
+    #[tracing::instrument(skip(self))]
     pub fn load_from_disk(
         &mut self,
         bounding_box: BoundingBox<GlobalCoordinate>,
@@ -62,26 +59,29 @@ impl WorldLoader {
 
         for region_coordinate in regions {
             // load the region
-            let region = self.save.load_region(region_coordinate)?;
+            let region = self.save.load_region(region_coordinate);
 
-            // add all chunks in the region to the loaded chunks
-            for (chunk_coordinate, chunk) in region.chunks().clone() {
-                self.loaded.insert(chunk_coordinate, chunk);
+            if let Ok(region) = region {
+                // add all chunks in the region to the loaded chunks
+                for (chunk_coordinate, chunk) in region.chunks().clone() {
+                    self.loaded.insert(chunk_coordinate, chunk);
+                }
+            } else {
+                tracing::error!("Failed to load region at {:?}", region_coordinate);
             }
         }
 
         Ok(())
     }
 
-    /// Saves the world, like I did when I was born.
-    pub async fn push_to_disk(&self) -> Result<(), WorldLoadingError> {
-        // get all regions
-        let regions = self.regions();
-
+    /// Writes chunks to disk.
+    #[tracing::instrument(skip(self))]
+    pub fn write_chunks(&self) -> Result<(), WorldLoadingError> {
         // write all to disk
-        self.save.write_chunks(&regions).await?;
-        self.save.write_metadata().await?;
-        // TODO: write mobs/other world factors..?
+        for r in self.regions() {
+            tracing::debug!("Writing region at {:?}", r.coordinates());
+            r.write()?;
+        }
 
         Ok(())
     }
@@ -110,7 +110,7 @@ impl WorldLoader {
         v.into_values().collect()
     }
 
-    pub fn get_save(&self) -> Result<WorldSave, WorldLoadingError> {
+    pub fn save(&self) -> Result<WorldSave, WorldLoadingError> {
         Ok(self.save.clone())
     }
 

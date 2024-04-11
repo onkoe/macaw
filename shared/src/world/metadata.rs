@@ -3,7 +3,7 @@
 //! A module containing representations of the various kinds of `MacawWorld`
 //! metadata!
 
-use std::{fmt::Display, path::PathBuf, sync::Arc};
+use std::{fmt::Display, fs::File, io::Write as _, path::PathBuf, sync::Arc};
 
 use bevy::utils::Uuid;
 use chrono::DateTime;
@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     generation::{generators::blank::BlankGenerator, Generator},
+    loader::WorldLoadingError,
     save::get_saves_path,
 };
 
@@ -85,6 +86,50 @@ impl WorldMetadata {
         );
 
         Arc::new(PathBuf::from(save))
+    }
+
+    /// The path to a world save's metadata file.
+    pub fn metadata_path(&self) -> Arc<PathBuf> {
+        Arc::new(self.save_path().join("save.toml"))
+    }
+
+    /// Writes metadata to disk.
+    pub fn write_to_disk(&self) -> Result<(), WorldLoadingError> {
+        // serialize self to string
+        let s = toml::to_string_pretty(&self).map_err(|e| {
+            WorldLoadingError::MetadataWriteFailed(format!(
+                "failed to serialize metadata to toml: {}",
+                e
+            ))
+        })?;
+
+        // make path if it doesn't already exist
+        std::fs::create_dir_all(self.save_path().as_ref()).map_err(|e| {
+            WorldLoadingError::SavePathCreationFailure(format!(
+                "error while creating path for metadata: `{}` at path: `{}`",
+                e,
+                self.save_path().to_string_lossy()
+            ))
+        })?;
+
+        // create a file
+        let mut file = File::create(self.metadata_path().as_ref()).map_err(|e| {
+            WorldLoadingError::MetadataWriteFailed(format!(
+                "failed to create metadata file at `{}`: {}",
+                self.metadata_path().to_string_lossy(),
+                e
+            ))
+        })?;
+
+        // write the string'd self to that file
+        file.write_all(s.as_bytes()).map_err(|e| {
+            WorldLoadingError::MetadataWriteFailed(format!(
+                "failed to write stringy metadata: {}",
+                e
+            ))
+        })?;
+
+        Ok(())
     }
 }
 

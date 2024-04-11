@@ -1,6 +1,5 @@
 use bevy::{
     prelude::*,
-    tasks::block_on,
     window::{CursorGrabMode, PrimaryWindow},
 };
 use shared::world::{generation::generators::fixed::Generate, MacawWorld};
@@ -27,12 +26,14 @@ impl MacawRendererPlugin {
         let mut window = window_query.single_mut();
         window.cursor.grab_mode = CursorGrabMode::Locked;
 
-        let mut world = block_on(Generate::generate_test_chunk());
-        world.save().expect("Failed to save world");
+        // create a new world and save it
+        let mut world = Generate::testing_world();
+        world.save().expect("world should save");
 
         // load back this world
-        let loaded_world = MacawWorld::load(world.metadata()).unwrap();
+        let loaded_world = MacawWorld::load(world.metadata()).expect("would should load");
 
+        // render the loaded world!
         meshing::render_clusters(
             &mut commands,
             meshes,
@@ -41,6 +42,8 @@ impl MacawRendererPlugin {
             materials,
         );
 
-        world.save().expect("Failed to save world");
+        world
+            .save()
+            .expect("world should be able to save onto its old self");
     }
 }
