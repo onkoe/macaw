@@ -46,13 +46,13 @@ impl<'a> Cluster<'a> {
     }
 
     pub fn build(self) -> (BlockType, Transform, Mesh) {
+        // adjust the bounding box to be in terms of global coordinates
         let bb = self.bounding_box.to_global(self.chunk);
 
         let mesh = bb.as_cuboid().mesh();
+
         let transform = Transform {
-            translation: ((self.bounding_box.larger().to_vec3()
-                + self.bounding_box.smaller().to_vec3())
-                / 2.0),
+            translation: ((bb.larger().to_vec3() + bb.smaller().to_vec3()) / 2.0),
             ..Default::default()
         };
 
