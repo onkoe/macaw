@@ -15,7 +15,7 @@ use self::{
 };
 
 use super::block::Block;
-use crate::{block::BlockSide, mob::traits::Mob, world::chunk::Chunk};
+use crate::{block::BlockSide, world::chunk::Chunk};
 
 pub mod chunk;
 pub mod coordinates;
@@ -36,7 +36,7 @@ pub struct MacawWorld {
     /// This allows to save and load!
     loader: WorldLoader,
     /// The entities currently inhabiting this world.
-    entities: HashSet<Box<dyn Mob>>,
+    entities: HashSet<()>,
     /// Spawn location (for players).
     spawn_location: GlobalCoordinate,
 }
